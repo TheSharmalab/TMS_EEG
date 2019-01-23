@@ -1,6 +1,6 @@
 for i = 1:13
 
-a = STUDY.changrp(7).erspdata{1, 1}(:,:,i);
+bbbba = STUDY.changrp(7).erspdata{1, 1}(:,:,i);
 a = mean(a);
 sp_FC1(i,:) = a;
 
