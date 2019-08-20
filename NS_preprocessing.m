@@ -1,16 +1,17 @@
 
 
-function eeg_prepro
+
 %This is a conversation of Vish's script
 % it has simply introduced loops into so the structure is easier to see 
 % N Sharma Aug 2019
  
-mydir='/omega/TMS_EEG_Data';
+mydir = ('/omega/TMS_EEG_Data');
 mycon=[ 1 2 3 4];
 mychan = [1:63];
 mywin = [-100  300];
+addpath(genpath('/Applications/MATLAB_R2019a.app/toolbox/eeglab14_1_1b'))
 
-cd mydir; 
+cd(mydir); 
 load('bob'); % this is function so need to load the data. 
 
 % Split trials into single pulse and SICI 70, 80, 90
@@ -26,11 +27,11 @@ for k=1:4; % for each condition
     myindex = find(myindex);  
     myeeg.data = EEG.data(:,:,myindex);
     myref.data = re_referenced_eeg.data(:,:,myindex);
-    myeeg.trials = size(myeeg.data); % single_pulse_eeg.trials Insert correct number of trials to produce ERP maps
-    myeeg.trials = myeeg.trials(3); % same as reref_sici_90_eeg.trials 
-    myref.trials = myeeg.trials(3); % this is werid in the script I think it shouold be myref.trials = myeeg.trials;
+    %myeeg.trials = size(myeeg.trials); % single_pulse_eeg.trials Insert correct number of trials to produce ERP maps
+    %myeeg.trials = myeeg.trials(3); % same as reref_sici_90_eeg.trials 
+    %myref.trials = myeeg.trials(3); % this is werid in the script I think it shouold be myref.trials = myeeg.trials;
     myref.epoch = myref.epoch(:,myindex);
-    pop_saveset(myref);
+    %pop_saveset(myref);
     %Raw plots
     figure; pop_plottopo(myeeg, mychan , strcat('Condition',num2str(k),'ERP data and scalp maps'), 0, 'ydir',1);
     figure; pop_timtopo(myeeg,mywin, NaN), strcat('Condition',num2str(k),'ERP data and scalp maps'); % this looks wrong 
@@ -93,5 +94,5 @@ raw_tep_peaks = [myeeg_tep_peaks(1), myeeg_tep_peaks(2), myeeg_tep_peaks(3), mye
 raw_tep_latency = [myeeg_tep_latency(1), myeeg_tep_latency(2), myeeg_tep_latency(3), myeeg_tep_latency(4)];
 raw_GMFP_peaks = [myeeg_GMFP_peaks(1), myeeg_GMFP_peaks(2), myeeg_GMFP_peaks(3), myeeg_GMFP_peaks(4)];
 raw_LMFP = [mysumeeg(1).ROI.R2.tseries, mysumeeg(2).ROI.R2.tseries, mysumeeg(3).ROI.R2.tseries, mysumeeg(4).ROI.R2.tseries];
-raw_GMFP = [mysumeeg(1).GMFA.R1.tseries, mysumeeg(2eeg).GMFA.R1.tseries, mysumeeg(3).GMFA.R1.tseries, mysumeeg(4).GMFA.R1.tseries];
+raw_GMFP = [mysumeeg(1).GMFA.R1.tseries, mysumeeg(2).GMFA.R1.tseries, mysumeeg(3).GMFA.R1.tseries, mysumeeg(4).GMFA.R1.tseries];
 
