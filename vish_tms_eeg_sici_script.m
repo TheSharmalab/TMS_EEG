@@ -1,20 +1,30 @@
 clear all
 clc
-addpath /Applications/MATLAB_R2016b.app/toolbox/eeglab14_1_1b
+addpath '/Applications/MATLAB_R2017a.app/toolbox/eeglab-952938e2c0ae800ef6ccf50f471595c0969a2890/eeglab14_1_1b'
 eeglab
-
+conditions=[];
 
 %% 
 
 % load eeg using .vhdr - PUT CORRECT FILENAME HERE
 [ALLEEG EEG CURRENTSET ALLCOM] = eeglab;
-EEG = pop_loadbv('/omega/HV011/HV011_S1', 'HV011_S1_rfdi_pre.vhdr');
+EEG = pop_loadbv('/Users/Vish 1/Desktop/TEP/HV007/Francesca session 2', 'fran rfdi sici pre s2.vhdr');
+
 [ALLEEG EEG CURRENTSET] = pop_newset(ALLEEG, EEG, 0,'gui','off'); 
 
 %% 
 
 % lookup channel locations
-EEG=pop_chanedit(EEG, 'lookup','/Applications/MATLAB_R2016b.app/toolbox/eeglab14_1_1b/plugins/dipfit2.2/standard_BESA/standard-10-5-cap385.elp');
+EEG=pop_chanedit(EEG, 'lookup','/Applications/MATLAB_R2017a.app/toolbox/eeglab-952938e2c0ae800ef6ccf50f471595c0969a2890/eeglab/plugins/dipfit2.2/standard_BESA/standard-10-5-cap385.elp');
+
+EEG.data( [ 1 : 16, 18 : 63 ], : ) = ...
+                          EEG.data( [ 1 : 16, 18 : 63 ], : ) - ...
+                      repmat( EEG.data( 17, : ), 62, 1 );
+EEG.data( 17, : ) = EEG.data( 17, : ) * -1;
+% Overwrite chan locs field
+load CHANLOCS2
+EEG.chanlocs = CHANLOCS2;
+
 [ALLEEG EEG] = eeg_store(ALLEEG, EEG, CURRENTSET);
 EEG = eeg_checkset( EEG );
 
@@ -90,7 +100,10 @@ EEG = pop_tesa_compselect( EEG,'compCheck','on','comps',[],'figSize','large','pl
 % interpolate removed data
 EEG = eeg_checkset( EEG );
 EEG = pop_tesa_interpdata( EEG, 'cubic', [1 1] );
-[ALLEEG EEG CURRENTSET] = pop_newset(ALLEEG, EEG, 10,'gui','off'); 
+[ALLEEG EEG CURRENTSET] = pop_newset(ALLEEG, EEG, 10,'gui','off');  
+
+% remove uneccesary variables
+clear('ALLCOM', 'ALLEEG', 'ans', 'CURRENTSET', 'CURRENTSTUDY', 'eeglabUpdater', 'LASTCOM', 'PLUGINLIST', 'STUDY', 'tmpstr');
 
 %% Split trials into single pulse and SICI 70, 80, 90
 conditions(index_rejected_trials) = 0;
@@ -143,6 +156,16 @@ sici_80_eeg.trials = size(sici_80_eeg.data);
 reref_sici_80_eeg.trials = sici_80_eeg.trials(3);
 sici_90_eeg.trials = size(sici_90_eeg.data);
 reref_sici_90_eeg.trials = sici_90_eeg.trials(3);
+
+reref_single_pulse_eeg.epoch = reref_single_pulse_eeg.epoch(:,single_pulse_index);
+reref_sici_70_eeg.epoch = reref_sici_70_eeg.epoch(:,sici_70_index);
+reref_sici_80_eeg.epoch = reref_sici_80_eeg.epoch(:,sici_80_index);
+reref_sici_90_eeg.epoch = reref_sici_90_eeg.epoch(:,sici_90_index);
+
+pop_saveset(reref_single_pulse_eeg);
+pop_saveset(reref_sici_70_eeg);
+pop_saveset(reref_sici_80_eeg);
+pop_saveset(reref_sici_90_eeg);
 %% Raw plots
 
 figure; pop_plottopo(single_pulse_eeg, [1:63] , 'single pulse', 0, 'ydir',1);
@@ -171,18 +194,149 @@ figure; pop_timtopo(reref_sici_80_eeg, [-100  300], [NaN]), 'sici 80 ERP data an
 figure; pop_plottopo(reref_sici_90_eeg, [1:63] , 'sici 90', 0, 'ydir',1);
 figure; pop_timtopo(reref_sici_90_eeg, [-100  300], [NaN]), 'sici 90 ERP data and scalp maps';
 
-%% TEP Analysis
-single_pulse_LMFP = pop_tesa_tepextract( reref_single_pulse_eeg, 'ROI', 'elecs', {'FC1','FC3','C1','C3'} );
-single_pulse_GMFP = pop_tesa_tepextract( reref_single_pulse_eeg, 'GMFA');
-single_pulse_n100_LMFP = pop_tesa_peakanalysis( single_pulse_LMFP, 'ROI', 'negative', 100, [80,120] );
-single_pulse_p30_p60_LMFP = pop_tesa_peakanalysis( single_pulse_LMFP, 'ROI', 'positive', [30,60], [15,35;55,75], 'method','centre', 'samples', 5);
-single_pulse_GMFP_peaks = pop_tesa_peakanalysis( single_pulse_GMFP, 'GMFA', 'positive', [30,60,180],[20,40;50,70;170,190]);
-%% 
+%% TEP Analysis Re-referenced Data
+reref_single_pulse_eeg = pop_tesa_tepextract( reref_single_pulse_eeg, 'ROI', 'elecs', {'FC1','FC3','C1','C3'} ); %Average M1 TEP
+    reref_single_pulse_eeg = pop_tesa_tepextract( reref_single_pulse_eeg, 'ROI', 'elecs', {'FC1','FC3','C1','C3'} ); %Average M1 TEP
+    reref_single_pulse_eeg.ROI.R2.tseries = abs(reref_single_pulse_eeg.ROI.R2.tseries);
+reref_single_pulse_eeg = pop_tesa_peakanalysis( reref_single_pulse_eeg, 'ROI', 'negative', [45,100], [35,55;75,150], 'method','centre', 'samples', 5);
+reref_single_pulse_eeg = pop_tesa_peakanalysis( reref_single_pulse_eeg, 'ROI', 'positive', [30,60,180], [15,35;55,75;150,250], 'method','centre', 'samples', 5);
+reref_single_pulse_eeg = pop_tesa_tepextract( reref_single_pulse_eeg, 'GMFA');
+reref_single_pulse_eeg = pop_tesa_peakanalysis( reref_single_pulse_eeg, 'GMFA', 'positive', [50,110,200],[30,70;70,150;150,250], 'method','largest', 'samples', 5);
 
-% save dataset - CHANGE FILENAME 
-EEG = pop_saveset( EEG, 'filename','Lorenzo_single_pulse.set','filepath','/Users/Vish 1/Desktop/MND/SICI');
-[ALLEEG EEG] = eeg_store(ALLEEG, EEG, CURRENTSET);
+reref_sici_70_eeg = pop_tesa_tepextract( reref_sici_70_eeg, 'ROI', 'elecs', {'FC1','FC3','C1','C3'} ); %Average M1 TEP
+    reref_sici_70_eeg = pop_tesa_tepextract( reref_sici_70_eeg, 'ROI', 'elecs', {'FC1','FC3','C1','C3'} ); %Average M1 TEP
+    reref_sici_70_eeg.ROI.R2.tseries = abs(reref_sici_70_eeg.ROI.R2.tseries );
+reref_sici_70_eeg = pop_tesa_peakanalysis( reref_sici_70_eeg, 'ROI', 'negative', [45,100], [35,55;75,150], 'method','centre', 'samples', 5);
+reref_sici_70_eeg = pop_tesa_peakanalysis( reref_sici_70_eeg, 'ROI', 'positive', [30,60,180], [15,35;55,75;150,250], 'method','centre', 'samples', 5);
+reref_sici_70_eeg = pop_tesa_tepextract( reref_sici_70_eeg, 'GMFA');
+reref_sici_70_eeg = pop_tesa_peakanalysis( reref_sici_70_eeg, 'GMFA', 'positive', [50,110,200],[30,70;70,150;150,250], 'method','largest', 'samples', 5);
 
-% clear EEGLAB
-ALLEEG = pop_delset( ALLEEG, [1] );
-STUDY = []; CURRENTSTUDY = 0; ALLEEG = []; EEG=[]; CURRENTSET=[];
+reref_sici_80_eeg = pop_tesa_tepextract( reref_sici_80_eeg, 'ROI', 'elecs', {'FC1','FC3','C1','C3'} ); %Average M1 TEP
+    reref_sici_80_eeg = pop_tesa_tepextract( reref_sici_80_eeg, 'ROI', 'elecs', {'FC1','FC3','C1','C3'} ); %Average M1 TEP
+    reref_sici_80_eeg.ROI.R2.tseries = abs(reref_sici_80_eeg.ROI.R2.tseries );
+reref_sici_80_eeg = pop_tesa_peakanalysis( reref_sici_80_eeg, 'ROI', 'negative', [45,100], [35,55;75,150], 'method','centre', 'samples', 5);
+reref_sici_80_eeg = pop_tesa_peakanalysis( reref_sici_80_eeg, 'ROI', 'positive', [30,60,180], [15,35;55,75;150,250], 'method','centre', 'samples', 5);
+reref_sici_80_eeg = pop_tesa_tepextract( reref_sici_80_eeg, 'GMFA');
+reref_sici_80_eeg = pop_tesa_peakanalysis( reref_sici_80_eeg, 'GMFA', 'positive', [50,110,200],[30,70;70,150;150,250], 'method','largest', 'samples', 5);
+
+reref_sici_90_eeg = pop_tesa_tepextract( reref_sici_90_eeg, 'ROI', 'elecs', {'FC1','FC3','C1','C3'} ); %Average M1 TEP
+    reref_sici_90_eeg = pop_tesa_tepextract( reref_sici_90_eeg, 'ROI', 'elecs', {'FC1','FC3','C1','C3'} ); %Average M1 TEP
+    reref_sici_90_eeg.ROI.R2.tseries = abs(reref_sici_90_eeg.ROI.R2.tseries );
+reref_sici_90_eeg = pop_tesa_peakanalysis( reref_sici_90_eeg, 'ROI', 'negative', [45,100], [35,55;75,150], 'method','centre', 'samples', 5);
+reref_sici_90_eeg = pop_tesa_peakanalysis( reref_sici_90_eeg, 'ROI', 'positive', [30,60,180], [15,35;55,75;150,250], 'method','centre', 'samples', 5);
+reref_sici_90_eeg = pop_tesa_tepextract( reref_sici_90_eeg, 'GMFA');
+reref_sici_90_eeg = pop_tesa_peakanalysis( reref_sici_90_eeg, 'GMFA', 'positive', [50,110,200],[30,70;70,150;150,250], 'method','largest', 'samples', 5);
+%% Plot re-ref M1 TEP
+plot(reref_single_pulse_eeg.ROI.R1.time, reref_single_pulse_eeg.ROI.R1.tseries)
+hold on
+plot(reref_sici_70_eeg.ROI.R1.time, reref_sici_70_eeg.ROI.R1.tseries)
+hold on
+plot(reref_sici_80_eeg.ROI.R1.time, reref_sici_80_eeg.ROI.R1.tseries)
+hold on
+plot(reref_sici_90_eeg.ROI.R1.time, reref_sici_90_eeg.ROI.R1.tseries)
+
+%% Plot re-ref M1 LMFP
+plot(reref_single_pulse_eeg.ROI.R2.time, reref_single_pulse_eeg.ROI.R2.tseries)
+hold on
+plot(reref_sici_70_eeg.ROI.R2.time, reref_sici_70_eeg.ROI.R2.tseries)
+hold on
+plot(reref_sici_80_eeg.ROI.R2.time, reref_sici_80_eeg.ROI.R2.tseries)
+hold on
+plot(reref_sici_90_eeg.ROI.R2.time, reref_sici_90_eeg.ROI.R2.tseries)
+
+%% TEP Analysis Raw Data
+single_pulse_eeg = pop_tesa_tepextract( single_pulse_eeg, 'ROI', 'elecs', {'FC1','FC3','C1','C3'} ); %Average M1 TEP
+    single_pulse_eeg = pop_tesa_tepextract( single_pulse_eeg, 'ROI', 'elecs', {'FC1','FC3','C1','C3'} ); %Average M1 TEP
+    single_pulse_eeg.ROI.R2.tseries = abs(single_pulse_eeg.ROI.R2.tseries);
+single_pulse_eeg = pop_tesa_peakanalysis( single_pulse_eeg, 'ROI', 'negative', [45,100], [35,55;75,150], 'method','centre', 'samples', 5);
+single_pulse_eeg = pop_tesa_peakanalysis( single_pulse_eeg, 'ROI', 'positive', [30,60,180], [15,35;55,75;150,250], 'method','centre', 'samples', 5);
+single_pulse_eeg = pop_tesa_tepextract( single_pulse_eeg, 'GMFA');
+single_pulse_eeg = pop_tesa_peakanalysis( single_pulse_eeg, 'GMFA', 'positive', [50,110,200],[30,70;70,150;150,250], 'method','largest', 'samples', 5);
+
+sici_70_eeg = pop_tesa_tepextract( sici_70_eeg, 'ROI', 'elecs', {'FC1','FC3','C1','C3'} ); %Average M1 TEP
+    sici_70_eeg = pop_tesa_tepextract( sici_70_eeg, 'ROI', 'elecs', {'FC1','FC3','C1','C3'} ); %Average M1 TEP
+    sici_70_eeg.ROI.R2.tseries = abs(sici_70_eeg.ROI.R2.tseries );
+sici_70_eeg = pop_tesa_peakanalysis( sici_70_eeg, 'ROI', 'negative', [45,100], [35,55;75,150], 'method','centre', 'samples', 5);
+sici_70_eeg = pop_tesa_peakanalysis( sici_70_eeg, 'ROI', 'positive', [30,60,180], [15,35;55,75;150,250], 'method','centre', 'samples', 5);
+sici_70_eeg = pop_tesa_tepextract( sici_70_eeg, 'GMFA');
+sici_70_eeg = pop_tesa_peakanalysis( sici_70_eeg, 'GMFA', 'positive', [50,110,200],[30,70;70,150;150,250], 'method','largest', 'samples', 5);
+
+sici_80_eeg = pop_tesa_tepextract( sici_80_eeg, 'ROI', 'elecs', {'FC1','FC3','C1','C3'} ); %Average M1 TEP
+    sici_80_eeg = pop_tesa_tepextract( sici_80_eeg, 'ROI', 'elecs', {'FC1','FC3','C1','C3'} ); %Average M1 TEP
+    sici_80_eeg.ROI.R2.tseries = abs(sici_80_eeg.ROI.R2.tseries );
+sici_80_eeg = pop_tesa_peakanalysis( sici_80_eeg, 'ROI', 'negative', [45,100], [35,55;75,150], 'method','centre', 'samples', 5);
+sici_80_eeg = pop_tesa_peakanalysis( sici_80_eeg, 'ROI', 'positive', [30,60,180], [15,35;55,75;150,250], 'method','centre', 'samples', 5);
+sici_80_eeg = pop_tesa_tepextract( sici_80_eeg, 'GMFA');
+sici_80_eeg = pop_tesa_peakanalysis( sici_80_eeg, 'GMFA', 'positive', [50,110,200],[30,70;70,150;150,250], 'method','largest', 'samples', 5);
+
+sici_90_eeg = pop_tesa_tepextract( sici_90_eeg, 'ROI', 'elecs', {'FC1','FC3','C1','C3'} ); %Average M1 TEP
+    sici_90_eeg = pop_tesa_tepextract( sici_90_eeg, 'ROI', 'elecs', {'FC1','FC3','C1','C3'} ); %Average M1 TEP
+    sici_90_eeg.ROI.R2.tseries = abs(sici_90_eeg.ROI.R2.tseries );
+sici_90_eeg = pop_tesa_peakanalysis( sici_90_eeg, 'ROI', 'negative', [45,100], [35,55;75,150], 'method','centre', 'samples', 5);
+sici_90_eeg = pop_tesa_peakanalysis( sici_90_eeg, 'ROI', 'positive', [30,60,180], [15,35;55,75;150,250], 'method','centre', 'samples', 5);
+sici_90_eeg = pop_tesa_tepextract( sici_90_eeg, 'GMFA');
+sici_90_eeg = pop_tesa_peakanalysis( sici_90_eeg, 'GMFA', 'positive', [50,110,200],[30,70;70,150;150,250], 'method','largest', 'samples', 5);
+
+%% Plot raw M1 TEP
+plot(single_pulse_eeg.ROI.R1.time, single_pulse_eeg.ROI.R1.tseries)
+hold on
+plot(sici_70_eeg.ROI.R1.time, sici_70_eeg.ROI.R1.tseries)
+hold on
+plot(sici_80_eeg.ROI.R1.time, sici_80_eeg.ROI.R1.tseries)
+hold on
+plot(sici_90_eeg.ROI.R1.time, sici_90_eeg.ROI.R1.tseries)
+
+%% Plot raw M1 LMFP
+plot(single_pulse_eeg.ROI.R2.time, single_pulse_eeg.ROI.R2.tseries)
+hold on
+plot(sici_70_eeg.ROI.R2.time, sici_70_eeg.ROI.R2.tseries)
+hold on
+plot(sici_80_eeg.ROI.R2.time, sici_80_eeg.ROI.R2.tseries)
+hold on
+plot(sici_90_eeg.ROI.R2.time, sici_90_eeg.ROI.R2.tseries)
+
+%% Summary re-ref
+reref_single_tep_peaks = [reref_single_pulse_eeg.ROI.R1.P30.amp, reref_single_pulse_eeg.ROI.R1.N45.amp, reref_single_pulse_eeg.ROI.R1.P60.amp, reref_single_pulse_eeg.ROI.R1.N100.amp, reref_single_pulse_eeg.ROI.R1.P180.amp];  
+reref_sici_70_tep_peaks = [reref_sici_70_eeg.ROI.R1.P30.amp, reref_sici_70_eeg.ROI.R1.N45.amp, reref_sici_70_eeg.ROI.R1.P60.amp, reref_sici_70_eeg.ROI.R1.N100.amp, reref_sici_70_eeg.ROI.R1.P180.amp];  
+reref_sici_80_tep_peaks = [reref_sici_80_eeg.ROI.R1.P30.amp, reref_sici_80_eeg.ROI.R1.N45.amp, reref_sici_80_eeg.ROI.R1.P60.amp, reref_sici_80_eeg.ROI.R1.N100.amp, reref_sici_80_eeg.ROI.R1.P180.amp];  
+reref_sici_90_tep_peaks = [reref_sici_90_eeg.ROI.R1.P30.amp, reref_sici_90_eeg.ROI.R1.N45.amp, reref_sici_90_eeg.ROI.R1.P60.amp, reref_sici_90_eeg.ROI.R1.N100.amp, reref_sici_90_eeg.ROI.R1.P180.amp];  
+reref_tep_peaks = [reref_single_tep_peaks, reref_sici_70_tep_peaks, reref_sici_80_tep_peaks, reref_sici_90_tep_peaks];
+
+reref_single_tep_latency = [reref_single_pulse_eeg.ROI.R1.P30.lat, reref_single_pulse_eeg.ROI.R1.N45.lat, reref_single_pulse_eeg.ROI.R1.P60.lat, reref_single_pulse_eeg.ROI.R1.N100.lat, reref_single_pulse_eeg.ROI.R1.P180.lat];  
+reref_sici_70_tep_latency = [reref_sici_70_eeg.ROI.R1.P30.lat, reref_sici_70_eeg.ROI.R1.N45.lat, reref_sici_70_eeg.ROI.R1.P60.lat, reref_sici_70_eeg.ROI.R1.N100.lat, reref_sici_70_eeg.ROI.R1.P180.lat];  
+reref_sici_80_tep_latency = [reref_sici_80_eeg.ROI.R1.P30.lat, reref_sici_80_eeg.ROI.R1.N45.lat, reref_sici_80_eeg.ROI.R1.P60.lat, reref_sici_80_eeg.ROI.R1.N100.lat, reref_sici_80_eeg.ROI.R1.P180.lat];  
+reref_sici_90_tep_latency = [reref_sici_90_eeg.ROI.R1.P30.lat, reref_sici_90_eeg.ROI.R1.N45.lat, reref_sici_90_eeg.ROI.R1.P60.lat, reref_sici_90_eeg.ROI.R1.N100.lat, reref_sici_90_eeg.ROI.R1.P180.lat];  
+reref_tep_latency = [reref_single_tep_latency, reref_sici_70_tep_latency, reref_sici_80_tep_latency, reref_sici_90_tep_latency];
+
+reref_single_GMFP_peaks = [reref_single_pulse_eeg.GMFA.R1.P50.amp, reref_single_pulse_eeg.GMFA.R1.P110.amp, reref_single_pulse_eeg.GMFA.R1.P200.amp];  
+reref_sici_70_GMFP_peaks = [reref_sici_70_eeg.GMFA.R1.P50.amp, reref_sici_70_eeg.GMFA.R1.P110.amp, reref_sici_70_eeg.GMFA.R1.P200.amp];  
+reref_sici_80_GMFP_peaks = [reref_sici_80_eeg.GMFA.R1.P50.amp, reref_sici_80_eeg.GMFA.R1.P110.amp, reref_sici_80_eeg.GMFA.R1.P200.amp];  
+reref_sici_90_GMFP_peaks = [reref_sici_90_eeg.GMFA.R1.P50.amp, reref_sici_90_eeg.GMFA.R1.P110.amp, reref_sici_90_eeg.GMFA.R1.P200.amp];  
+reref_GMFP_peaks = [reref_single_GMFP_peaks, reref_sici_70_GMFP_peaks, reref_sici_80_GMFP_peaks, reref_sici_90_GMFP_peaks];
+
+reref_LMFP = [reref_single_pulse_eeg.ROI.R2.tseries, reref_sici_70_eeg.ROI.R2.tseries, reref_sici_80_eeg.ROI.R2.tseries, reref_sici_90_eeg.ROI.R2.tseries];
+reref_GMFP = [reref_single_pulse_eeg.GMFA.R1.tseries, reref_sici_70_eeg.GMFA.R1.tseries, reref_sici_80_eeg.GMFA.R1.tseries, reref_sici_90_eeg.GMFA.R1.tseries];
+
+reref_m1_teps = [reref_single_pulse_eeg.ROI.R1.tseries, reref_sici_70_eeg.ROI.R1.tseries, reref_sici_80_eeg.ROI.R1.tseries, reref_sici_90_eeg.ROI.R1.tseries];
+
+%% Summary raw
+single_tep_peaks = [single_pulse_eeg.ROI.R1.P30.amp, single_pulse_eeg.ROI.R1.N45.amp, single_pulse_eeg.ROI.R1.P60.amp, single_pulse_eeg.ROI.R1.N100.amp, single_pulse_eeg.ROI.R1.P180.amp];  
+sici_70_tep_peaks = [sici_70_eeg.ROI.R1.P30.amp, sici_70_eeg.ROI.R1.N45.amp, sici_70_eeg.ROI.R1.P60.amp, sici_70_eeg.ROI.R1.N100.amp, sici_70_eeg.ROI.R1.P180.amp];  
+sici_80_tep_peaks = [sici_80_eeg.ROI.R1.P30.amp, sici_80_eeg.ROI.R1.N45.amp, sici_80_eeg.ROI.R1.P60.amp, sici_80_eeg.ROI.R1.N100.amp, sici_80_eeg.ROI.R1.P180.amp];  
+sici_90_tep_peaks = [sici_90_eeg.ROI.R1.P30.amp, sici_90_eeg.ROI.R1.N45.amp, sici_90_eeg.ROI.R1.P60.amp, sici_90_eeg.ROI.R1.N100.amp, sici_90_eeg.ROI.R1.P180.amp];  
+raw_tep_peaks = [single_tep_peaks, sici_70_tep_peaks, sici_80_tep_peaks, sici_90_tep_peaks];
+
+single_tep_latency = [single_pulse_eeg.ROI.R1.P30.lat, single_pulse_eeg.ROI.R1.N45.lat, single_pulse_eeg.ROI.R1.P60.lat, single_pulse_eeg.ROI.R1.N100.lat, single_pulse_eeg.ROI.R1.P180.lat];  
+sici_70_tep_latency = [sici_70_eeg.ROI.R1.P30.lat, sici_70_eeg.ROI.R1.N45.lat, sici_70_eeg.ROI.R1.P60.lat, sici_70_eeg.ROI.R1.N100.lat, sici_70_eeg.ROI.R1.P180.lat];  
+sici_80_tep_latency = [sici_80_eeg.ROI.R1.P30.lat, sici_80_eeg.ROI.R1.N45.lat, sici_80_eeg.ROI.R1.P60.lat, sici_80_eeg.ROI.R1.N100.lat, sici_80_eeg.ROI.R1.P180.lat];  
+sici_90_tep_latency = [sici_90_eeg.ROI.R1.P30.lat, sici_90_eeg.ROI.R1.N45.lat, sici_90_eeg.ROI.R1.P60.lat, sici_90_eeg.ROI.R1.N100.lat, sici_90_eeg.ROI.R1.P180.lat];  
+raw_tep_latency = [single_tep_latency, sici_70_tep_latency, sici_80_tep_latency, sici_90_tep_latency];
+
+single_GMFP_peaks = [single_pulse_eeg.GMFA.R1.P50.amp, single_pulse_eeg.GMFA.R1.P110.amp, single_pulse_eeg.GMFA.R1.P200.amp];  
+sici_70_GMFP_peaks = [sici_70_eeg.GMFA.R1.P50.amp, sici_70_eeg.GMFA.R1.P110.amp, sici_70_eeg.GMFA.R1.P200.amp];  
+sici_80_GMFP_peaks = [sici_80_eeg.GMFA.R1.P50.amp, sici_80_eeg.GMFA.R1.P110.amp, sici_80_eeg.GMFA.R1.P200.amp];  
+sici_90_GMFP_peaks = [sici_90_eeg.GMFA.R1.P50.amp, sici_90_eeg.GMFA.R1.P110.amp, sici_90_eeg.GMFA.R1.P200.amp];  
+raw_GMFP_peaks = [single_GMFP_peaks, sici_70_GMFP_peaks, sici_80_GMFP_peaks, sici_90_GMFP_peaks];
+
+raw_LMFP = [single_pulse_eeg.ROI.R2.tseries, sici_70_eeg.ROI.R2.tseries, sici_80_eeg.ROI.R2.tseries, sici_90_eeg.ROI.R2.tseries];
+raw_GMFP = [single_pulse_eeg.GMFA.R1.tseries, sici_70_eeg.GMFA.R1.tseries, sici_80_eeg.GMFA.R1.tseries, sici_90_eeg.GMFA.R1.tseries];
