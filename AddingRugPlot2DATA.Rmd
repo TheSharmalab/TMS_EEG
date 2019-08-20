@@ -1,0 +1,80 @@
+---
+title: "Untitled"
+author: "NSharma"
+date: "05/04/2019"
+output: html_document
+---
+
+```{r}
+###############
+
+ library(readr)
+ library(broom)
+ library(dplyr)
+ library(purrr)
+
+
+# LOAD THE SICI 70 DATA SET
+
+tep70 <- read_csv("/omega/raw_TMS_EEG_Data/sici_70_m1_tep_array.csv",col_names = FALSE)
+
+# Convert to data frame
+tep70 <- as.data.frame(tep70)
+
+# Relabel the column. Use -999 to 1000 so label is in ms. 
+colnames(tep70) <- c(1:2000)
+
+# Add the group variable  
+tep70$group <- 1
+
+##########################
+
+# LOAD THE SINGLE PULSE DATA SET
+
+tepsp <- read_csv("/omega/raw_TMS_EEG_Data/sp_m1_tep_array.csv",col_names = FALSE)
+
+# Convert to data frame
+tepsp <- as.data.frame(tepsp)
+
+# Relabel the column. Use -999 to 1000 so label is in ms. 
+colnames(tepsp) <- c(1:2000)
+
+# Add the group variable 
+tepsp$group <- 2
+
+##############################
+
+# Combine the rows 
+mycomp <- bind_rows(tepsp, tep70)
+
+mycomp$group <- factor(mycomp$group)
+
+# Run the stats for EVERY time point
+res <- lapply(mycomp[,c(1:2000)], function(x) tidy(wilcox.test(x ~ mycomp$group, paired = TRUE ))$p.value)
+# Convert to data frame
+res <- as.data.frame(res)
+
+# Select the times of interest SET AT 2000 A DEFAULT
+res <- select(res, c(1:2000))
+
+# Adjust the p-value C- other methods can be used. 
+resFDR <- p.adjust(res, method = "fdr", n = length(res))
+
+#Add zeros to the figure file 
+fig2d$bin <- 0
+
+#Change to 1 if < 0.05 
+fig2d$bin[resFDR <0.05] <- 1
+
+# Update to the ggplot command. Note the geom_rug addition. 
+plot2d <- ggplot(data = fig2d, aes(x = Time, y = TEP, group = Condition))+
+  geom_errorbar(aes(ymin=TEP-SE, ymax=TEP+SE, group = Condition, color = Condition)) +
+  geom_line() +
+  geom_rug(data = subset(fig2d, bin == '1'), aes(x = Time), inherit.aes = F) +
+  xlab("Time /ms") +
+  ylab("TEP Amplitude /µV") +
+  scale_color_brewer(palette="Pastel1") +
+  theme_classic() +
+  theme(legend.position="bottom", legend.title = element_blank())
+```
+

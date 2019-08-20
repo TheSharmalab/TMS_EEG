@@ -1,0 +1,374 @@
+---
+title: "Untitled"
+author: "Isabella Kaczmrczyk"
+date: "19/03/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+library(R.matlab)
+temp <- readMat("1MV_ERP_data_spvs90_15subjects.mat")
+
+
+
+```{r}
+library(ggpubr)
+library(magrittr)
+library(dplyr)
+library(ggplot2)
+library(ggsignif)
+library(cowplot)
+library(readr)
+setwd("/omega/raw_TMS_EEG_Data/CorrelationData")
+
+
+
+# USE ME 
+ldcor <- function(x,y,z)  # x = fiule name, y = sp or sici, z = wAVW
+{
+            temp <- read_csv(x,col_names = FALSE)
+            temp <- rename(temp, TEP=X1, MEP=X2)
+            temp <- mutate(temp,subject = c(1:15))
+            temp <- mutate(temp,con = y)
+            temp <- mutate(temp,wave = z)
+            temp <- as.data.frame(temp)
+            #temp <- as.data.frame(temp)
+
+}
+
+
+tbl <- ldcor("sp_n15.csv","sp","n15")
+tbl <- bind_rows(tbl,ldcor("sp_p30.csv","sp","p30"))
+tbl <- bind_rows(tbl,ldcor("sp_n45.csv","sp","n45"))
+tbl <- bind_rows(tbl,ldcor("sp_p60.csv","sp","p60"))
+tbl <- bind_rows(tbl,ldcor("sp_n100.csv","sp","n100"))
+tbl <- bind_rows(tbl,ldcor("sp_p180.csv","sp","p180"))
+
+tbl <- bind_rows(tbl,ldcor("sici_70_n15.csv","SICI70","n15"))
+tbl <- bind_rows(tbl,ldcor("sici_70_p30.csv","SICI70","p30"))
+tbl <- bind_rows(tbl,ldcor("sici_70_n45.csv","SICI70","n45"))
+tbl <- bind_rows(tbl,ldcor("sici_70_p60.csv","SICI70","p60"))
+tbl <- bind_rows(tbl,ldcor("sici_70_n100.csv","SICI70","n100"))
+tbl <- bind_rows(tbl,ldcor("sici_70_p180.csv","SICI70","p180"))
+
+tbl <- bind_rows(tbl,ldcor("sici_80_n15.csv","SICI80","n15"))
+tbl <- bind_rows(tbl,ldcor("sici_80_p30.csv","SICI80","p30"))
+tbl <- bind_rows(tbl,ldcor("sici_80_n45.csv","SICI80","n45"))
+tbl <- bind_rows(tbl,ldcor("sici_80_p60.csv","SICI80","p60"))
+tbl <- bind_rows(tbl,ldcor("sici_80_n100.csv","SICI80","n100"))
+tbl <- bind_rows(tbl,ldcor("sici_80_p180.csv","SICI80","p180"))
+
+tbl <- bind_rows(tbl,ldcor("sici_90_n15.csv","SICI90","n15"))
+tbl <- bind_rows(tbl,ldcor("sici_90_p30.csv","SICI90","p30"))
+tbl <- bind_rows(tbl,ldcor("sici_90_n45.csv","SICI90","n45"))
+tbl <- bind_rows(tbl,ldcor("sici_90_p60.csv","SICI90","p60"))
+tbl <- bind_rows(tbl,ldcor("sici_90_n100.csv","SICI90","n100"))
+tbl <- bind_rows(tbl,ldcor("sici_90_p180.csv","SICI90","p180"))
+
+
+library(corrr)
+
+tbl2 <- tbl %>% 
+  filter(con=="sp",wave=="N100") %>%
+  select(TEP, MEP) %>%
+  correlate(method = c( "spearman"), quiet = TRUE,diagonal = 1) %>%
+  shave() %>%
+  rplot()
+
+
+```
+
+
+```{r}
+n15 <- filter(tbl, wave=="n15")
+p30 <- filter(tbl, wave=="p30")
+n45 <- filter(tbl, wave=="n45")
+p60 <- filter(tbl, wave=="p60")
+n100 <- filter(tbl, wave=="n100")
+p180 <- filter(tbl, wave=="p180")
+
+library("ggExtra")
+library(DEGreport)
+library(grid)
+library(ggrepel)
+library(Hmisc)
+
+
+p_cor <- function(x,y,z)  # x = fiule name, y = sp or sici, z = wAVW  p_cor(tbl,"SICI70","n15")
+{
+            temp <- filter(x, con==y & wave==z )
+            temp <- select(temp, TEP, MEP)
+            temp <- as.data.frame(temp)
+            temp <- cor.test(temp$TEP, temp$MEP, method = "spearman")
+            temp <- broom::tidy(temp)
+            temp <- as.data.frame(temp)
+            temp <- select(temp, p.value,estimate)
+            pval <- round(temp,2) 
+}
+
+
+# genearting the p values and rho
+plabel <- "p ="
+rholabel <- "rho ="
+
+library(cowplot)
+library(ggplot2)
+# this needs to run before plotting
+
+# N15 
+mystats_sp <- p_cor(tbl,"sp","n15")
+# creates the label 
+mysplabel <- (paste("Single Pulse",rholabel,mystats_sp$estimate,plabel,mystats_sp$p.value))
+
+mystats_sici70 <- p_cor(tbl,"SICI70","n15")
+my70label <- paste("SICI 70",rholabel,mystats_sici70$estimate,plabel,mystats_sici70$p.value)
+
+mystats_sici80 <- p_cor(tbl,"SICI80","n15")
+my80label <- paste("SICI 80",rholabel,mystats_sici80$estimate,plabel,mystats_sici80$p.value)
+
+mystats_sici90 <- p_cor(tbl,"SICI90","n15")
+my90label <- paste("SICI 90",rholabel,mystats_sici90$estimate,plabel,mystats_sici90$p.value)
+
+n15plot <- ggplot(n15, aes(x=TEP, y=MEP, color=con)) +
+    geom_point() +  
+    geom_smooth(method="lm", se=FALSE,size=2) +
+    labs(x = "n15 TEP",y= "MEP (mV)") +
+    scale_color_manual(values=c( "#92C5DE","#FFEC8B","#B8E186","#BABABA")) +
+    theme(text = element_text(size=11), 
+          legend.position = "none",
+          panel.border = element_blank(),
+          panel.grid.major = element_blank(),
+          panel.grid.minor = element_blank(),
+          axis.line = element_line(colour = "black")) + 
+    annotate("text", x = -5, y = 1.6, label = mysplabel,hjust = 0, size = 3) + 
+    annotate("text", x = -5, y = 1.5, label = my70label,hjust = 0, size = 3) +
+    annotate("text", x = -5, y = 1.4, label = my80label,hjust = 0, size = 3) +
+    annotate("text", x = -5, y = 1.3, label = my90label,hjust = 0, size = 3) 
+
+# Plot the density 
+fn15plot <- ggMarginal(n15plot,type = 'density',
+  margins = 'x',
+  size = 5,
+  groupColour = TRUE,
+  groupFill = TRUE)
+
+# P30
+mystats_sp <- p_cor(tbl,"sp","p30")
+mysplabel <- (paste("Single Pulse",rholabel,mystats_sp$estimate,plabel,mystats_sp$p.value))
+
+mystats_sici70 <- p_cor(tbl,"SICI70","p30")
+my70label <- paste("SICI 70",rholabel,mystats_sici70$estimate,plabel,mystats_sici70$p.value)
+
+mystats_sici80 <- p_cor(tbl,"SICI80","p30")
+my80label <- paste("SICI 80",rholabel,mystats_sici80$estimate,plabel,mystats_sici80$p.value)
+
+mystats_sici90 <- p_cor(tbl,"SICI90","p30")
+my90label <- paste("SICI 90",rholabel,mystats_sici90$estimate,plabel,mystats_sici90$p.value)
+
+
+p30plot <- ggplot(p30, aes(x=TEP, y=MEP, color=con)) +
+    geom_point() + 
+    geom_smooth(method="lm", se=FALSE,size=1.5) +
+    labs(x = "p30 TEP",y= "MEP (mV)") +
+    scale_color_manual(values=c( "#92C5DE","#FFEC8B","#B8E186","#BABABA")) +
+    theme(text = element_text(size=11), 
+          legend.position = "none",
+          panel.border = element_blank(),
+          panel.grid.major = element_blank(),
+          panel.grid.minor = element_blank(),
+          axis.line = element_line(colour = "black")) + 
+    annotate("text", x = 2.5, y = 1.75, label = mysplabel,hjust = 0, size = 3) + 
+    annotate("text", x = 2.5, y = 1.6, label = my70label,hjust = 0, size = 3) +
+    annotate("text", x = 2.5, y = 1.5, label = my80label,hjust = 0, size = 3) +
+    annotate("text", x = 2.5, y = 1.4, label = my90label,hjust = 0, size = 3)
+
+fp30plot <- ggMarginal(p30plot,type = 'density',
+  margins = 'x',
+  size = 5,
+  groupColour = TRUE,
+  groupFill = TRUE)
+
+# N45
+
+mystats_sp <- p_cor(tbl,"sp","n45")
+mysplabel <- (paste("Single Pulse",rholabel,mystats_sp$estimate,plabel,mystats_sp$p.value))
+
+mystats_sici70 <- p_cor(tbl,"SICI70","n45")
+my70label <- paste("SICI 70",rholabel,mystats_sici70$estimate,plabel,mystats_sici70$p.value)
+
+mystats_sici80 <- p_cor(tbl,"SICI80","n45")
+my80label <- paste("SICI 80",rholabel,mystats_sici80$estimate,plabel,mystats_sici80$p.value)
+
+mystats_sici90 <- p_cor(tbl,"SICI90","n45")
+my90label <- paste("SICI 90",rholabel,mystats_sici90$estimate,plabel,mystats_sici90$p.value)
+
+#install.packages("extrafont")
+library(extrafont)
+#font_import() # Prepare for this to take several minutes
+
+
+
+n45plot <- ggplot(n45, aes(x=TEP, y=MEP, color=con)) +
+    geom_point() +  
+    geom_smooth(method="lm", se=FALSE,size=1.5) +
+    labs(x = "n45 TEP",y= "MEP (mV)") +
+    scale_color_manual(values=c( "#92C5DE","#FFEC8B","#B8E186","#BABABA")) +
+    theme(text = element_text(size=11), 
+          legend.position = "none",
+          panel.border = element_blank(),
+          panel.grid.major = element_blank(),
+          panel.grid.minor = element_blank(),
+          axis.line = element_line(colour = "black")) + 
+    annotate("text", x = 1.5, y = 1.75, label = mysplabel,hjust = 0, size=3) + 
+    annotate("text", x = 1.5, y = 1.6, label = my70label,hjust = 0,fontface = "bold", size = 3) +
+    annotate("text", x = 1.5, y = 1.5, label = my80label,hjust = 0,fontface = "bold", size = 3) +
+    annotate("text", x = 1.5, y = 1.4, label = my90label,hjust = 0,fontface = "bold", size = 3)
+
+fn45plot <- ggMarginal(n45plot,type = 'density',
+  margins = 'x',
+  size = 5,
+  groupColour = TRUE,
+  groupFill = TRUE)
+
+# p60
+
+mystats_sp <- p_cor(tbl,"sp","p60")
+mysplabel <- (paste("Single Pulse",rholabel,mystats_sp$estimate,plabel,mystats_sp$p.value))
+
+mystats_sici70 <- p_cor(tbl,"SICI70","p60")
+my70label <- paste("SICI 70",rholabel,mystats_sici70$estimate,plabel,mystats_sici70$p.value)
+
+mystats_sici80 <- p_cor(tbl,"SICI80","p60")
+my80label <- paste("SICI 80",rholabel,mystats_sici80$estimate,plabel,mystats_sici80$p.value)
+
+mystats_sici90 <- p_cor(tbl,"SICI90","p60")
+my90label <- paste("SICI 90",rholabel,mystats_sici90$estimate,plabel,mystats_sici90$p.value)
+
+
+p60plot <- ggplot(p60, aes(x=TEP, y=MEP, color=con)) +
+    geom_point() +  
+    geom_smooth(method="lm", se=FALSE,size=1.5) +
+    labs(x = "p60 TEP",y= "MEP (mV)") +
+    scale_color_manual(values=c( "#92C5DE","#FFEC8B","#B8E186","#BABABA")) +
+    theme(text = element_text(size=11), 
+          legend.position = "none",
+          panel.border = element_blank(),
+          panel.grid.major = element_blank(),
+          panel.grid.minor = element_blank(),
+          axis.line = element_line(colour = "black")) + 
+    annotate("text", x = 3, y = 1.75, label =mysplabel,hjust = 0, size = 3) + 
+    annotate("text", x = 3, y = 1.6, label = my70label,hjust = 0, size = 3) +
+    annotate("text", x = 3, y = 1.5, label = my80label,hjust = 0, size = 3) +
+    annotate("text", x = 3, y = 1.4, label = my90label,hjust = 0, size = 3)
+
+fp60plot <- ggMarginal(p60plot,type = 'density',
+  margins = 'x',
+  size = 5,
+  groupColour = TRUE,
+  groupFill = TRUE)
+
+# N100
+
+mystats_sp <- p_cor(tbl,"sp","n100")
+mysplabel <- (paste("Single Pulse",rholabel,mystats_sp$estimate,plabel,mystats_sp$p.value))
+
+mystats_sici70 <- p_cor(tbl,"SICI70","n100")
+my70label <- paste("SICI 70",rholabel,mystats_sici70$estimate,plabel,mystats_sici70$p.value)
+
+mystats_sici80 <- p_cor(tbl,"SICI80","n100")
+my80label <- paste("SICI 80",rholabel,mystats_sici80$estimate,plabel,mystats_sici80$p.value)
+
+mystats_sici90 <- p_cor(tbl,"SICI90","n100")
+my90label <- paste("SICI 90",rholabel,mystats_sici90$estimate,plabel,mystats_sici90$p.value)
+
+
+n100plot <- ggplot(n100, aes(x=TEP, y=MEP, color=con)) +
+    geom_point() +  
+    geom_smooth(method="lm", se=FALSE,size=1.5) +
+    labs(x = "n100 TEP",y= "MEP (mV)") +
+    scale_color_manual(values=c( "#92C5DE","#FFEC8B","#B8E186","#BABABA")) +
+    theme(text = element_text(size=11), 
+          legend.position = "none",
+          panel.border = element_blank(),
+          panel.grid.major = element_blank(),
+          panel.grid.minor = element_blank(),
+          axis.line = element_line(colour = "black")) + 
+    annotate("text", x = -9, y = 1.75, label =mysplabel,hjust = 0, size = 3) + 
+    annotate("text", x = -9, y = 1.6, label = my70label,hjust = 0, size = 3) +
+    annotate("text", x = -9, y = 1.5, label = my80label,hjust = 0, size = 3) +
+    annotate("text", x = -9, y = 1.4, label = my90label,hjust = 0, size = 3)
+
+fn100plot <- ggMarginal(n100plot,type = 'density',
+  margins = 'x',
+  size = 5,
+  groupColour = TRUE,
+  groupFill = TRUE)
+
+# p180
+
+mystats_sp <- p_cor(tbl,"sp","p180")
+mysplabel <- (paste("Single Pulse",rholabel,mystats_sp$estimate,plabel,mystats_sp$p.value))
+
+mystats_sici70 <- p_cor(tbl,"SICI70","p180")
+my70label <- paste("SICI 70",rholabel,mystats_sici70$estimate,plabel,mystats_sici70$p.value)
+
+mystats_sici80 <- p_cor(tbl,"SICI80","p180")
+my80label <- paste("SICI 80",rholabel,mystats_sici80$estimate,plabel,mystats_sici80$p.value)
+
+mystats_sici90 <- p_cor(tbl,"SICI90","p180")
+my90label <- paste("SICI 90",rholabel,mystats_sici90$estimate,plabel,mystats_sici90$p.value)
+
+p180plot <- ggplot(p180, aes(x=TEP, y=MEP, color=con)) +
+    geom_point() +  
+    geom_smooth(method="lm", se=FALSE,size=1.5) +
+    labs(x = "p180 TEP",y= "MEP (mV)") +
+    scale_color_manual(values=c( "#92C5DE","#FFEC8B","#B8E186","#BABABA")) +
+    theme(text = element_text(size=11), 
+          legend.position = "none",
+          panel.border = element_blank(),
+          panel.grid.major = element_blank(),
+          panel.grid.minor = element_blank(),
+          axis.line = element_line(colour = "black")) + 
+    annotate("text", x = -2, y = 1.75, label =mysplabel,hjust = 0, size = 3) + 
+    annotate("text", x = -2, y = 1.6, label = my70label,hjust = 0, size = 3) +
+    annotate("text", x = -2, y = 1.5, label = my80label,hjust = 0,fontface = "bold", size = 3) +
+    annotate("text", x = -2, y = 1.4, label = my90label,hjust = 0, size = 3)
+
+fp180plot <- ggMarginal(p180plot,type = 'density',
+  margins = 'x',
+  size = 5,
+  groupColour = TRUE,
+  groupFill = TRUE)
+
+#####################
+
+p181 <- p180
+# Reorer just for the legend
+
+p181$con <- factor(p181$con, levels=c("sp", "SICI70", "SICI80","SICI90"), labels=c("Single Pulse", "SICI 70", "SICI 80","SICI 90"))
+# Shame plot just for the legend
+legplot <- ggplot(p181, aes(x=TEP, y=MEP, color = con)) +
+    geom_point() + 
+    geom_smooth(method=lm, se=FALSE) +
+    scale_color_manual(values=c("#BABABA", "#92C5DE","#FFEC8B","#B8E186")) +
+    labs(color="       ") + 
+   theme(legend.justification = "center" ,legend.position="bottom")
+
+
+legend_a <- get_legend(legplot)
+
+library(ggpubr)
+
+
+test <- plot_grid(fn15plot, fp30plot,  fn45plot, fp60plot, fn100plot, fp180plot, legend_a, labels = c('A', 'B', 'C', 'D','E','F'), align = "h", ncol = 2,nrow = 4,rel_heights = c(1.1,1.1,1.1,0.15))
+ggsave("/omega/raw_TMS_EEG_Data/CorrelationData/test1.png", dpi = 300, width = 20, height = 25, units = "cm")
+```
+
+
+
+
+
+

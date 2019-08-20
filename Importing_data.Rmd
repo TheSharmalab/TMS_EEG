@@ -1,0 +1,346 @@
+---
+title: "Untitled"
+author: "Isabella Kaczmrczyk"
+date: "19/03/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+library(R.matlab)
+temp <- readMat("1MV_ERP_data_spvs90_15subjects.mat")
+
+
+
+```{r}
+library(ggpubr)
+library(magrittr)
+library(dplyr)
+library(ggplot2)
+library(ggsignif)
+library(cowplot)
+
+setwd("/omega/raw_TMS_EEG_Data/CorrelationData")
+
+
+ntbl <- list.files(pattern = "*.csv") %>% 
+    map_df(~read_csv(.,col_names = FALSE)%>%
+            rename(TEP=X1, MEP=X2)%>%
+            mutate(.,subject = c(1:15))  %>%
+            mutate(.,con = "sp") %>%
+            mutate(.,wave = "p60"))
+
+
+
+# USE ME 
+ldcor <- function(x,y,z)  # x = fiule name, y = sp or sici, z = wAVW
+{
+            temp <- read_csv(x,col_names = FALSE)
+            temp <- rename(temp, TEP=X1, MEP=X2)
+            temp <- mutate(temp,subject = c(1:15))
+            temp <- mutate(temp,con = y)
+            temp <- mutate(temp,wave = z)
+            temp <- as.data.frame(temp)
+            #temp <- as.data.frame(temp)
+
+}
+
+
+tbl <- bind_rows(ldcor("sp_n15.csv","sp","n15"),ldcor("sp_p30.csv","sp","p30"))
+tbl <- bind_rows(tbl,ldcor("sp_n45.csv","sp","n45"))
+tbl <- bind_rows(tbl,ldcor("sp_p60.csv","sp","p60"))
+tbl <- bind_rows(tbl,ldcor("sp_n100.csv","sp","n100"))
+tbl <- bind_rows(tbl,ldcor("sp_p180.csv","sp","p180"))
+
+tbl <- bind_rows(tbl,ldcor("sp_n15.csv","sp","n15"))
+tbl <- bind_rows(tbl,ldcor("sp_p30.csv","sp","p30"))
+tbl <- bind_rows(tbl,ldcor("sp_n45.csv","sp","n45"))
+tbl <- bind_rows(tbl,ldcor("sp_p60.csv","sp","p60"))
+tbl <- bind_rows(tbl,ldcor("sp_n100.csv","sp","n100"))
+tbl <- bind_rows(tbl,ldcor("sp_p180.csv","sp","p180"))
+
+
+tbl <- bind_rows(tbl,ntbl)
+
+library(corrr)
+
+tbl2 <- x %>% 
+  filter(con=="sp",wave=="N100") %>%
+  select(TEP, MEP) %>%
+  correlate(method = c( "spearman"), quiet = TRUE,diagonal = 1) %>%
+  shave() %>%
+  rplot()
+
+mutate(x,subject = c(1:15),condition=condition)
+
+mutate(x,con = "con")
+library(reshape2)
+mysici70<- melt(mysici70, id.vars=c("subjects"))
+
+mysici80 <- read_csv("/omega/raw_TMS_EEG_Data/sici_80_peaks.csv")
+mysici80 <- as.data.frame(mysici80)
+mysici80 <- t(mysici80)
+mysici80 <- as.data.frame(mysici80)
+mysici80 <- rename(mysici80, c("V1"="N15", "V2"="P30", "V3"="N45","V4"="P60","V5"="N100" ))
+rownames(mysici80) <- c(1:15)
+mysici80$subjects <- c(1:15)
+library(reshape2)
+mysici80 <- melt(mysici80, id.vars=c("subjects"))
+
+mysici90 <- read_csv("/omega/raw_TMS_EEG_Data/sici_90_peaks.csv")
+mysici90 <- as.data.frame(mysici90)
+mysici90 <- t(mysici90)
+mysici90 <- as.data.frame(mysici90)
+mysici90 <- rename(mysici90, c("V1"="N15", "V2"="P30", "V3"="N45","V4"="P60","V5"="N100" ))
+rownames(mysici90) <- c(1:15)
+mysici90$subjects <- c(1:15)
+library(reshape2)
+mysici90 <- melt(mysici90, id.vars=c("subjects"))
+
+
+mysp <- read_csv("/omega/raw_TMS_EEG_Data/sp_peaks.csv")
+mysp <- as.data.frame(mysp)
+mysp <- t(mysp)
+mysp <- as.data.frame(mysp)
+mysp <- rename(mysp, c("V1"="N15", "V2"="P30", "V3"="N45","V4"="P60","V5"="N100" ))
+rownames(mysp) <- c(1:15)
+mysp$subjects <- c(1:15)
+library(reshape2)
+mysp <- melt(mysp, id.vars=c("subjects"))
+
+
+mydata <- bind_rows(mysp, mysici70, mysici80, mysici90)
+```
+
+
+```{r}
+setwd("/omega/raw_TMS_EEG_Data/")
+myfiles <- list.files() # grabs the list 
+dframes <- lapply(myfiles, myimport)  # importS THEN ALL
+```
+
+
+```{r}
+
+# TMS SICI
+fig1a <- data.frame(dframes[1])
+fig1a$Condition <- factor(fig1a$Condition, levels = c("spTMS", "SICI70", "SICI80", "SICI90"))
+my_1acomparisons <- list( c("spTMS", "SICI70"), c("spTMS", "SICI80"), c("spTMS", "SICI90") )
+
+#TEP
+fig1b <- data.frame(dframes[2])
+fig1b$Peak <- factor(fig1b$Peak, levels = c("N15", "P30", "N45", "P60"))
+fig1b$Condition <- factor(fig1b$Condition, levels = c("SP", "SICI_70", "SICI_80", "SICI_90"))
+my_1bcomparisons <- list( c("SP", "SICI_70"), c("SP", "SICI_80"), c("SP", "SICI_90") )
+
+
+#TEP
+fig1c <- data.frame(dframes[3])
+fig1c$Peak <- factor(fig1c$Peak, levels = c("N15", "P30", "N45", "P60"))
+fig1c$Condition <- factor(fig1c$Condition, levels = c("SICI_70", "SICI_80", "SICI_90"))
+
+# TMS SICI
+fig1d <- data.frame(dframes[4])
+fig1d$Condition <- factor(fig1d$Condition, levels = c("spTMS", "SICI70"))
+
+# TMS SICI
+fig1e <- data.frame(dframes[5])
+fig1e$Condition <- factor(fig1e$Condition, levels = c("spTMS", "SICI80"))
+
+# TMS SICI
+fig1f <- data.frame(dframes[6])
+fig1f$Condition <- factor(fig1f$Condition, levels = c("spTMS", "SICI90"))
+
+# TMS SICI
+fig2a <- data.frame(dframes[7])
+fig2a$Condition <- factor(fig2a$Condition, levels = c("spTMS", "High ", "Medium", "Low"))
+my_2acomparisons <- list( c("spTMS", "High "), c("spTMS", "Medium"), c("spTMS", "Low") )
+
+#TEP
+fig2b <- data.frame(dframes[8])
+fig2b$Peak <- factor(fig2b$Peak, levels = c("N15", "P30", "N45", "P60"))
+fig2b$Condition <- factor(fig2b$Condition, levels = c("spTMS", "High", "Medium", "Low"))
+my_2bcomparisons <- list( c("spTMS", "High"), c("spTMS", "Medium"), c("spTMS", "Low") )
+#TEP
+fig2c <- data.frame(dframes[9])
+fig2c$Peak <- factor(fig2c$Peak, levels = c("N15", "P30", "N45", "P60"))
+fig2c$Condition <- factor(fig2c$Condition, levels = c("High", "Medium", "Low"))
+my_comparisons <- list( c("spTMS", "High"), c("spTMS", "Medium"), c("spTMS", "Low") )
+
+#SICI
+fig2d <- data.frame(dframes[10])
+fig2d$Condition <- factor(fig2d$Condition, levels = c("spTMS", "High"))
+
+#SICI
+fig2e <- data.frame(dframes[11])
+fig2e$Condition <- factor(fig2e$Condition, levels = c("spTMS", "Medium"))
+
+#SICI
+fig2f <- data.frame(dframes[12])
+fig2f$Condition <- factor(fig2f$Condition, levels = c("spTMS", "Low"))
+
+
+#max(fig1a[SICI70]$MEP, na.rm = TRUE)
+
+
+```
+
+
+```{r}
+library(ggpubr)
+ 
+  ggviolin(data = fig1a,x = "Condition", y = "MEP",fill = "Condition",
+   palette = c("#00AFBB", "#E7B800","#E7B800", "#FC4E07")) +
+  geom_dotplot(binaxis="y",stackdir="center",binwidth=0.06,alpha = 0.35)+
+  stat_summary(fun.data = "mean_cl_boot", colour = "black", size = 0.5,fill='black')+
+  theme_classic() +
+  stat_compare_means(comparisons = my_1acomparisons, label.y = c(1.9, 2.05, 2.2),hide.ns = TRUE,label = "p.signif") +
+  theme(text = element_text(size=14), axis.text.x=element_blank(),legend.position = "none") +
+  labs(x = "Condition",y= "Motor Evoked Potential (mV)") 
+
+plot1a <- ggplot(data = fig1a, aes(x = Condition, y = MEP)) +
+  geom_violin( aes(fill = factor(Condition))) +
+  geom_dotplot(binaxis="y",stackdir="center",binwidth=0.04,alpha = 0.35)+
+  stat_summary(fun.data = "mean_cl_boot", colour = "black", size = 0.5,fill='black')+
+  theme_classic() +
+  stat_compare_means(comparisons = my_1acomparisons, label.y = c(1.9, 2.05, 2.2),hide.ns = TRUE,label = "p.signif") +
+  theme(text = element_text(size=14), axis.text.x=element_blank(),legend.position = "none") +
+  labs(x = "Condition",y= "Motor Evoked Potential (mV)") 
+
+colour =c("#999999", "#999999", "#56B4E9","#999999")
+
+plot1b <- ggplot(data = fig1b, aes(x = Condition, y = TEP), xlab ="")    +
+  facet_wrap(~ Peak, ncol=4) +
+  geom_violin(aes(fill = factor(Condition))) +
+  scale_fill_brewer(palette="Pastel1") + 
+  geom_dotplot(binaxis="y",stackdir="center",binwidth=0.4,alpha = 0.35) +
+   stat_summary(fun.data = "mean_cl_boot", colour = "black", size = 0.5,fill='black') +
+  theme_classic() +
+  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(),legend.title = element_blank()) + 
+  stat_compare_means(comparisons = my_1bcomparisons, label.y = c(15, 16.5, 18))
+
+plot1c <- ggplot(data = fig1c, aes(x = Condition, y = TEP_change), xlab ="")  +
+  facet_wrap(~ Peak, ncol = 4) +
+  geom_violin(draw_quantiles = c(0.25, 0.5, 0.75), aes(fill = factor(Condition))) + scale_fill_brewer(palette="Pastel1") + 
+  geom_dotplot(binaxis="y",stackdir="center",binwidth=0.04, color="white") + stat_summary(fun.data=data_summary, geom="crossbar", width=0.1 ) +  
+  theme_classic() +
+  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank()) + 
+  theme(legend.position="bottom", legend.title = element_blank())
+
+plot1d <- ggplot(data = fig1d, aes(x = Time, y = TEP, group = Condition))+
+  geom_errorbar(aes(ymin=TEP-SE, ymax=TEP+SE, group = Condition, color = Condition)) +
+  geom_line() +
+  xlab("Time /ms") +
+  ylab("TEP Amplitude /µV") +
+  scale_color_brewer(palette="Pastel1") +
+  theme_classic() +
+  theme(legend.position="bottom", legend.title = element_blank())
+
+plot1e <- ggplot(data = fig1e, aes(x = Time, y = TEP, group = Condition))+
+  geom_errorbar(aes(ymin=TEP-SE, ymax=TEP+SE, group = Condition, color = Condition)) +
+  geom_line() +
+  xlab("Time /ms") +
+  ylab("TEP Amplitude /µV") +
+  scale_color_brewer(palette="Pastel1") +
+  theme_classic() +
+  theme(legend.position="bottom", legend.title = element_blank())
+
+plot1f <- ggplot(data = fig1f, aes(x = Time, y = TEP, group = Condition))+
+  geom_errorbar(aes(ymin=TEP-SE, ymax=TEP+SE, group = Condition, color = Condition)) +
+  geom_line() +
+  xlab("Time /ms") +
+  ylab("TEP Amplitude /µV") +
+  scale_color_brewer(palette="Pastel1") +
+  theme_classic() +
+  theme(legend.position="bottom", legend.title = element_blank())
+```
+
+
+```{r}
+
+theme_set(theme_cowplot(font_size=8)) # reduce default font size
+plot_grid(plot1a, plot1b, NULL,  plot1c, plot1d, plot1e, plot1f, labels = c('A', 'B', 'C',NULL, 'D'), align = "h", ncol = 2,nrow = 3)
+
+plot_grid(plot1a, plot1b, labels = c('A', 'B'), align = "h", ncol = 2)
+plot_grid(plot1a, plot1b, labels = c('A', 'B'), align = "h", ncol = 2)
+ggsave("temp.png")
+
+```
+
+
+
+
+```{r}
+
+plot2a <- ggplot(data = fig2a, aes(x = Condition, y = MEP)) +
+  geom_violin(draw_quantiles = c(0.25, 0.5, 0.75),aes(fill = factor(Condition))) + scale_fill_brewer(palette="Pastel1") + 
+  geom_dotplot(binaxis="y",stackdir="center",binwidth=0.04, color="white") + stat_summary(fun.data=data_summary, geom="crossbar", width=0.1 ) +
+  theme_classic() + stat_compare_means(comparisons = my_2acomparisons, label.y = c(1.5, 1.6, 1.7)) +
+  theme(legend.position="bottom", legend.title = element_blank())
+
+plot2b <- ggplot(data = fig2b, aes(x = Condition, y = TEP), xlab ="")    +
+  facet_wrap(~ Peak, ncol = 4) +
+  geom_violin(draw_quantiles = c(0.25, 0.5, 0.75), aes(fill = factor(Condition))) + scale_fill_brewer(palette="Pastel1") + 
+  geom_dotplot(binaxis="y",stackdir="center",binwidth=0.04, color="white") + stat_summary(fun.data=data_summary, geom="crossbar", width=0.1 ) +  
+  theme_classic() +
+  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank()) + 
+  stat_compare_means(comparisons = my_2bcomparisons, label.y = c(13, 14, 15)) +
+  theme(legend.position="bottom", legend.title = element_blank())
+
+plot2c <- ggplot(data = fig2c, aes(x = Condition, y = TEP), xlab ="")  +
+  facet_wrap(~ Peak, ncol = 4) +
+  geom_violin(draw_quantiles = c(0.25, 0.5, 0.75), aes(fill = factor(Condition))) + scale_fill_brewer(palette="Pastel1") + 
+  geom_dotplot(binaxis="y",stackdir="center",binwidth=0.04, color="white") + stat_summary(fun.data=data_summary, geom="crossbar", width=0.1 ) +  
+  theme_classic() +
+  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank()) + 
+  theme(legend.position="bottom", legend.title = element_blank())
+
+plot2d <- ggplot(data = fig2d, aes(x = Time, y = TEP, group = Condition))+
+  geom_errorbar(aes(ymin=TEP-SE, ymax=TEP+SE, group = Condition, color = Condition)) +
+  geom_line() +
+  xlab("Time /ms") +
+  ylab("TEP Amplitude /µV") +
+  scale_color_brewer(palette="Pastel1") +
+  theme_classic() +
+  theme(legend.position="bottom", legend.title = element_blank())
+
+plot2e <- ggplot(data = fig2e, aes(x = Time, y = TEP, group = Condition))+
+  geom_errorbar(aes(ymin=TEP-SE, ymax=TEP+SE, group = Condition, color = Condition)) +
+  geom_line() +
+  xlab("Time /ms") +
+  ylab("TEP Amplitude /µV") +
+  scale_color_brewer(palette="Pastel1") +
+  theme_classic() +
+  theme(legend.position="bottom", legend.title = element_blank())
+
+plot2f <- ggplot(data = fig2f, aes(x = Time, y = TEP, group = Condition))+
+  geom_errorbar(aes(ymin=TEP-SE, ymax=TEP+SE, group = Condition, color = Condition)) +
+  geom_line() +
+  xlab("Time /ms") +
+  ylab("TEP Amplitude /µV") +
+  scale_color_brewer(palette="Pastel1") +
+  theme_classic() +
+  theme(legend.position="bottom", legend.title = element_blank())
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
