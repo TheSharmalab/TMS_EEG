@@ -11,7 +11,7 @@ mychan = [1:63];
 mywin = [-100  300];
 
 cd mydir; 
-load('bob');
+load('bob'); % this is function so need to load the data. 
 
 % Split trials into single pulse and SICI 70, 80, 90
 conditions(index_rejected_trials) = 0;
