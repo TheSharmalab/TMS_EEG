@@ -1,19 +1,27 @@
 clear all
 clc
 
+% This is the modified script by N Sharma 
+% this script require CHANLOCS2. This has been uploaded to github
+% There are a number of dependences on toolboxs NEED TO DOWNLOAD bvaio1.57
+% from https://github.com/openroc/eeglab/tree/master/tags/EEGLAB8_0_0_0beta/plugins
+% and put into  eeglab14_1_1b/plugins/bvaio1.57
 
 mycap = ('/Applications/MATLAB_R2019a.app/toolbox/eeglab14_1_1b/plugins/dipfit2.3/standard_BESA/standard-10-5-cap385.elp') ; % NOTE this is version 2.3. previously 2.2
 mydir = ('/omega/TMS_EEG_Data');
+mymdir = ('/omega/TMS_EEG_Data/marker_data');
 
-% Need to cd in eeglab and start it else the paths are messed up. 
-addpath('/Applications/MATLAB_R2019a.app/toolbox/eeglab14_1_1b');
-addpath('/Applications/MATLAB_R2019a.app/toolbox/eeglab14_1_1b/functions/popfunc');
-addpath('/Applications/MATLAB_R2019a.app/toolbox/eeglab14_1_1b/plugins/bvaio1.57');
+%addpath('/Applications/MATLAB_R2019a.app/toolbox/eeglab14_1_1b');
+%addpath('/Applications/MATLAB_R2019a.app/toolbox/eeglab14_1_1b/functions/popfunc');
+%addpath('/Applications/MATLAB_R2019a.app/toolbox/eeglab14_1_1b/plugins/bvaio1.57');
+addpath(genpath('/Applications/MATLAB_R2019a.app/toolbox/eeglab14_1_1b'))
+addpath(genpath('/Applications/MATLAB_R2019a.app/toolbox/FastICA_25'))
 
-
-%addpath(genpath('/Applications/MATLAB_R2019a.app/toolbox/eeglab14_1_1b'))
 
 conditions=[];
+
+
+
 
 % load eeg using .vhdr - PUT CORRECT FILENAME HERE
 [ALLEEG EEG CURRENTSET ALLCOM] = eeglab;
@@ -73,7 +81,7 @@ EEG = eeg_checkset( EEG );
 EEG = pop_resample( EEG, 1000);
 [ALLEEG EEG CURRENTSET] = pop_newset(ALLEEG, EEG, 5,'gui','off'); 
 
-%% fastICA 1st round
+%% fastICA 1st round  % This requires the efast ICA toolbox 
 EEG = pop_tesa_fastica( EEG, 'approach', 'symm', 'g', 'tanh', 'stabilization', 'off' );
 [ALLEEG EEG CURRENTSET] = pop_newset(ALLEEG, EEG, 4,'gui','off'); 
 EEG = pop_tesa_compselect( EEG,'compCheck','on','comps',15,'figSize','large','plotTimeX',[-200 500],'plotFreqX',[1 100],'tmsMuscle','on','tmsMuscleThresh',8,'tmsMuscleWin',[11 30],'tmsMuscleFeedback','off','blink','off','blinkThresh',2.5,'blinkElecs',{'Fp1','Fp2'},'blinkFeedback','off','move','off','moveThresh',2,'moveElecs',{'F7','F8'},'moveFeedback','off','muscle','off','muscleThresh',0.6,'muscleFreqWin',[30 100],'muscleFeedback','off','elecNoise','off','elecNoiseThresh',4,'elecNoiseFeedback','off' );

@@ -58,7 +58,7 @@ for k=1:4; % for each condition
     %pop_saveset(myref);
     %Raw plots
     figure; pop_plottopo(myeeg, mychan , strcat('Condition',num2str(k),'ERP data and scalp maps'), 0, 'ydir',1);
-    figure; pop_timtopo(myeeg,[-100  300], NaN, strcat('Condition',num2str(k),'ERP data and scalp maps')); % this looks wrong 
+    %figure; pop_timtopo(myeeg,[-100  300], NaN, strcat('Condition',num2str(k),'ERP data and scalp maps')); % this looks wrong 
     % Re-referenced plots
     figure; pop_plottopo(myref,mychan , strcat('Condition',num2str(k),'ERP data and scalp maps'), 0, 'ydir',1);
     %figure; pop_timtopo(myref,mywin,NaN), strcat('Condition',num2str(k),'ERP data and scalp maps'); 
