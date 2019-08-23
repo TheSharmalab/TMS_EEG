@@ -91,9 +91,6 @@ end
 
 
 % unclear why we need this? Presume that there are multiple waves identified?
-% 
-
-
 for j = 1:6
     sp_peaks{1,j} = min(sp_peaks{1,j}); %N15
     sp_peaks{2,j} = max(sp_peaks{2,j}); %P30
@@ -111,7 +108,7 @@ for j = 1:6
 end
 
 % 
-% 
+% old code for reference only 
 % for i = 1:15; % per subject 
 %         % the number are electrode location within the study changrp 
 %         sp_m1_tep_data = [STUDY.changrp(8).erpdata{1, 1}(:,i) STUDY.changrp(12).erpdata{1, 1}(:,i) STUDY.changrp(40).erpdata{1, 1}(:,i) STUDY.changrp(43).erpdata{1, 1}(:,i)];
