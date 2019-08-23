@@ -2,15 +2,19 @@ clear all
 clc
 
 % This is the modified script by N Sharma 
-% this script require CHANLOCS2. This has been uploaded to github
+% this script require CHANLOCS2 (?location). This has been uploaded to github
 % There are a number of dependences on toolboxs NEED TO DOWNLOAD bvaio1.57
 % from https://github.com/openroc/eeglab/tree/master/tags/EEGLAB8_0_0_0beta/plugins
 % and put into  eeglab14_1_1b/plugins/bvaio1.57
+% this currently outputs a .mat files for eacxh subject. 
+% could consider outputing .set file. 
+% 23/8/19
 
 mycap = ('/Applications/MATLAB_R2019a.app/toolbox/eeglab14_1_1b/plugins/dipfit2.3/standard_BESA/standard-10-5-cap385.elp') ; % NOTE this is version 2.3. previously 2.2
 mydir = ('/Users/Isabella/Documents/thesharmalab/TMS_EEG/Additional_Experiments/EEG_data');
 mymdir = ('/Users/Isabella/Documents/thesharmalab/TMS_EEG/Additional_Experiments/MEP_PEAKS');
 mysavedir = ('/Users/Isabella/Documents/thesharmalab/TMS_EEG/Additional_Experiments/Preprocessed_data')
+mysub = ('HV005_ADD');
 
 %addpath('/Applications/MATLAB_R2019a.app/toolbox/eeglab14_1_1b');
 %addpath('/Applications/MATLAB_R2019a.app/toolbox/eeglab14_1_1b/functions/popfunc');
@@ -26,7 +30,7 @@ conditions=[];
 
 % load eeg using .vhdr - PUT CORRECT FILENAME HERE
 [ALLEEG EEG CURRENTSET ALLCOM] = eeglab;
-EEG = pop_loadbv(mydir, 'HV005_ADD.vhdr');
+EEG = pop_loadbv(mydir, strcat(mysub,'.vhdr'));
 
 [ALLEEG EEG CURRENTSET] = pop_newset(ALLEEG, EEG, 0,'gui','off'); 
 
@@ -126,4 +130,4 @@ clear('ALLCOM', 'ALLEEG', 'ans', 'CURRENTSET', 'CURRENTSTUDY', 'eeglabUpdater', 
 
 %% Save
 
-save(strcat(mysavedir,'/HV005_add_preprocessed.mat'), 'EEG', 'index_rejected_trials');
+save(strcat(mysavedir,'/',mysub,'_preprocessed.mat'), 'EEG', 'index_rejected_trials');
