@@ -10,7 +10,7 @@ mymdir = ('/omega/TMS_EEG_Data/marker_data'); % this is data from Signal
 
 mypeaks = ["N15" "1001:1021" ;"P30" "1016:1036";"N45" "1032:1056" ;"P60" "1049:1071";"N100" "1091:1151" ; "P180" "1151:1251"];
 myGMFPpeaks = ["GMFP1" ;"GMFP2";"GMFP3"];
-
+mywt = [1016, 1031, 1046, 1061, 1101, 1181 ]; % this is the time point to take the missing data wave form if the peak is empty
 mycon = [1 "70" ;2 "70.70"; 3 "70.120" ;4 "120"];
 
 
@@ -22,8 +22,7 @@ addpath '/Applications/MATLAB_R2017a.app/toolbox/raacampbell-shadedErrorBar-0dc4
 addpath '/Applications/MATLAB_R2017a.app/toolbox/bonf_holm'
 addpath '/Applications/MATLAB_R2017a.app/toolbox/swtest'
 addpath '/Applications/MATLAB_R2017a.app/toolbox/dnafinder-wilcoxon-2f43343'
-
-% this is a test. 
+ 
 
 [STUDY ALLEEG] = std_editset( STUDY, [], 'commands', { ...
 { 'index' 1 'load' '/omega/TMS_EEG_Data/S1_70.set' 'subject' 'subj1' 'condition' '70' }, ...
@@ -65,93 +64,33 @@ STUDY = pop_savestudy( STUDY, EEG );
 myoutpeaks ={};
 
 
-mywt = [1016, 1031, 1046, 1061, 1101, 1181 ]; % this is the time point to take a wave form if it is empty
 
 for i = 1:15; % per subject 
     for j = 1:4; % per condition
         % the number are electrode location within the study changrp 
+        % this should cycle between the conditions with j
         m1_tep_data = [STUDY.changrp(8).erpdata{j, 1}(:,i) STUDY.changrp(12).erpdata{j, 1}(:,i) STUDY.changrp(40).erpdata{j, 1}(:,i) STUDY.changrp(43).erpdata{j, 1}(:,i)];
         m1_tep = mean((m1_tep_data)');
         m1_tep_array(i,:) = m1_tep; % this is the time wave 
         for k=1:6; % per peak
-            myoutpeaks(j,k) = -findpeaks(-m1_tep(str2num(mypeaks(k,2))));
+            if rem(k,2) == 0 % if even ie we need a postive numbers
+                myoutpeaks(j,k) = -findpeaks(-m1_tep(str2num(mypeaks(k,2)))); % this needs to be altered with the negative. 
+            else
+               myoutpeaks(j,k) = findpeaks(m1_tep(str2num(mypeaks(k,2)))); % this needs to be altered with the negative. 
+            end
             if  isempty(cell2mat(myoutpeaks(j,k))) == 1
-                myoutpeaks(j,k) = num2cell(m1_tep(i,1016));
+                myoutpeaks(j,k) = num2cell(m1_tep(i,mywt(:,k)));
             end
         end
     end     
 end
 
 
-
-for i = 1:15; % per subject 
-        % the number are electrode location within the study changrp 
-        sp_m1_tep_data = [STUDY.changrp(8).erpdata{1, 1}(:,i) STUDY.changrp(12).erpdata{1, 1}(:,i) STUDY.changrp(40).erpdata{1, 1}(:,i) STUDY.changrp(43).erpdata{1, 1}(:,i)];
-        sp_m1_tep = mean((sp_m1_tep_data)');
-        sp_m1_tep_array(i,:) = sp_m1_tep; % this is the time wave 
-
-        sp_N15 = -findpeaks(-sp_m1_tep(1001:1021));
-        sp_P30 = findpeaks(sp_m1_tep(1016:1036));
-        sp_N45 = -findpeaks(-sp_m1_tep(1032:1056));
-        sp_P60 = findpeaks(sp_m1_tep(1049:1071));
-        sp_N100 = -findpeaks(-sp_m1_tep(1091:1151));
-        sp_P180 = findpeaks(sp_m1_tep(1151:1251));
-
-        sici_m1_tep_data = [STUDY.changrp(8).erpdata{2, 1}(:,i) STUDY.changrp(12).erpdata{2, 1}(:,i) STUDY.changrp(40).erpdata{2, 1}(:,i) STUDY.changrp(43).erpdata{2, 1}(:,i)];
-        sici_m1_tep = mean((sici_m1_tep_data)');
-        sici_m1_tep_array(i,:) = sici_m1_tep;
-
-        sici_N15 = -findpeaks(-sici_m1_tep(1001:1021));
-        sici_P30 = findpeaks(sici_m1_tep(1016:1036));
-        sici_N45 = -findpeaks(-sici_m1_tep(1032:1056));
-        sici_P60 = findpeaks(sici_m1_tep(1049:1071));
-        sici_N100 = -findpeaks(-sici_m1_tep(1091:1151));
-        sici_P180 = findpeaks(sici_m1_tep(1151:1251));
-
-        sici_peaks(:,i) = {sici_N15; sici_P30; sici_N45; sici_P60; sici_N100; sici_P180};
-        sp_peaks(:,i) = {sp_N15; sp_P30; sp_N45; sp_P60; sp_N100; sp_P180};
+% unclear why we need this? Presume that there are multiple waves identified?
+% 
 
 
-        if  isempty(cell2mat(sp_peaks(1,i))) == 1
-            sp_peaks(1,i) = num2cell(sp_m1_tep(1016));
-        end
-        if isempty(cell2mat(sp_peaks(2,i))) == 1
-            sp_peaks(2,i) = num2cell(sp_m1_tep(1031));
-        end
-        if isempty(cell2mat(sp_peaks(3,i))) == 1
-            sp_peaks(3,i) = num2cell(sp_m1_tep(1046));
-        end
-        if isempty(cell2mat(sp_peaks(4,i))) == 1
-            sp_peaks(4,i) = num2cell(sp_m1_tep(1061));
-        end
-        if isempty(cell2mat(sp_peaks(5,i))) == 1
-            sp_peaks(5,i) = num2cell(sp_m1_tep(1101));
-        end
-        if isempty(cell2mat(sp_peaks(6,i))) == 1
-            sp_peaks(6,i) = num2cell(sp_m1_tep(1181));
-        end
-
-        if  isempty(cell2mat(sici_peaks(1,i))) == 1
-            sici_peaks(1,i) = num2cell(sici_m1_tep(1016));
-        end
-        if isempty(cell2mat(sici_peaks(2,i))) == 1
-            sici_peaks(2,i) = num2cell(sici_m1_tep(1031));
-        end
-        if isempty(cell2mat(sici_peaks(3,i))) == 1
-            sici_peaks(3,i) = num2cell(sici_m1_tep(1046));
-        end
-        if isempty(cell2mat(sici_peaks(4,i))) == 1
-            sici_peaks(4,i) = num2cell(sici_m1_tep(1061));
-        end
-        if isempty(cell2mat(sici_peaks(5,i))) == 1
-            sici_peaks(5,i) = num2cell(sici_m1_tep(1101));
-        end
-        if isempty(cell2mat(sici_peaks(6,i))) == 1
-            sici_peaks(6,i) = num2cell(sici_m1_tep(1181));
-        end
-end
-
-for j = 1:length(sp_peaks) 
+for j = 1:6
     sp_peaks{1,j} = min(sp_peaks{1,j}); %N15
     sp_peaks{2,j} = max(sp_peaks{2,j}); %P30
     sp_peaks{3,j} = min(sp_peaks{3,j}); %N45
@@ -167,6 +106,89 @@ for j = 1:length(sp_peaks)
     sici_peaks{6,j} = max(sici_peaks{6,j}); %P180
 end
 
-
-
+% 
+% 
+% for i = 1:15; % per subject 
+%         % the number are electrode location within the study changrp 
+%         sp_m1_tep_data = [STUDY.changrp(8).erpdata{1, 1}(:,i) STUDY.changrp(12).erpdata{1, 1}(:,i) STUDY.changrp(40).erpdata{1, 1}(:,i) STUDY.changrp(43).erpdata{1, 1}(:,i)];
+%         sp_m1_tep = mean((sp_m1_tep_data)');
+%         sp_m1_tep_array(i,:) = sp_m1_tep; % this is the time wave 
+% 
+%         sp_N15 = -findpeaks(-sp_m1_tep(1001:1021));
+%         sp_P30 = findpeaks(sp_m1_tep(1016:1036));
+%         sp_N45 = -findpeaks(-sp_m1_tep(1032:1056));
+%         sp_P60 = findpeaks(sp_m1_tep(1049:1071));
+%         sp_N100 = -findpeaks(-sp_m1_tep(1091:1151));
+%         sp_P180 = findpeaks(sp_m1_tep(1151:1251));
+% 
+%         sici_m1_tep_data = [STUDY.changrp(8).erpdata{2, 1}(:,i) STUDY.changrp(12).erpdata{2, 1}(:,i) STUDY.changrp(40).erpdata{2, 1}(:,i) STUDY.changrp(43).erpdata{2, 1}(:,i)];
+%         sici_m1_tep = mean((sici_m1_tep_data)');
+%         sici_m1_tep_array(i,:) = sici_m1_tep;
+% 
+%         sici_N15 = -findpeaks(-sici_m1_tep(1001:1021));
+%         sici_P30 = findpeaks(sici_m1_tep(1016:1036));
+%         sici_N45 = -findpeaks(-sici_m1_tep(1032:1056));
+%         sici_P60 = findpeaks(sici_m1_tep(1049:1071));
+%         sici_N100 = -findpeaks(-sici_m1_tep(1091:1151));
+%         sici_P180 = findpeaks(sici_m1_tep(1151:1251));
+% 
+%         sici_peaks(:,i) = {sici_N15; sici_P30; sici_N45; sici_P60; sici_N100; sici_P180};
+%         sp_peaks(:,i) = {sp_N15; sp_P30; sp_N45; sp_P60; sp_N100; sp_P180};
+% 
+% 
+%         if  isempty(cell2mat(sp_peaks(1,i))) == 1
+%             sp_peaks(1,i) = num2cell(sp_m1_tep(1016));
+%         end
+%         if isempty(cell2mat(sp_peaks(2,i))) == 1
+%             sp_peaks(2,i) = num2cell(sp_m1_tep(1031));
+%         end
+%         if isempty(cell2mat(sp_peaks(3,i))) == 1
+%             sp_peaks(3,i) = num2cell(sp_m1_tep(1046));
+%         end
+%         if isempty(cell2mat(sp_peaks(4,i))) == 1
+%             sp_peaks(4,i) = num2cell(sp_m1_tep(1061));
+%         end
+%         if isempty(cell2mat(sp_peaks(5,i))) == 1
+%             sp_peaks(5,i) = num2cell(sp_m1_tep(1101));
+%         end
+%         if isempty(cell2mat(sp_peaks(6,i))) == 1
+%             sp_peaks(6,i) = num2cell(sp_m1_tep(1181));
+%         end
+% 
+%         if  isempty(cell2mat(sici_peaks(1,i))) == 1
+%             sici_peaks(1,i) = num2cell(sici_m1_tep(1016));
+%         end
+%         if isempty(cell2mat(sici_peaks(2,i))) == 1
+%             sici_peaks(2,i) = num2cell(sici_m1_tep(1031));
+%         end
+%         if isempty(cell2mat(sici_peaks(3,i))) == 1
+%             sici_peaks(3,i) = num2cell(sici_m1_tep(1046));
+%         end
+%         if isempty(cell2mat(sici_peaks(4,i))) == 1
+%             sici_peaks(4,i) = num2cell(sici_m1_tep(1061));
+%         end
+%         if isempty(cell2mat(sici_peaks(5,i))) == 1
+%             sici_peaks(5,i) = num2cell(sici_m1_tep(1101));
+%         end
+%         if isempty(cell2mat(sici_peaks(6,i))) == 1
+%             sici_peaks(6,i) = num2cell(sici_m1_tep(1181));
+%         end
+% end
+% 
+% for j = 1:length(sp_peaks) 
+%     sp_peaks{1,j} = min(sp_peaks{1,j}); %N15
+%     sp_peaks{2,j} = max(sp_peaks{2,j}); %P30
+%     sp_peaks{3,j} = min(sp_peaks{3,j}); %N45
+%     sp_peaks{4,j} = max(sp_peaks{4,j}); %P60
+%     sp_peaks{5,j} = min(sp_peaks{5,j}); %N100
+%     sp_peaks{6,j} = max(sp_peaks{6,j}); %P180
+%     
+%     sici_peaks{1,j} = min(sici_peaks{1,j}); %N15
+%     sici_peaks{2,j} = max(sici_peaks{2,j}); %P30
+%     sici_peaks{3,j} = min(sici_peaks{3,j}); %N45
+%     sici_peaks{4,j} = max(sici_peaks{4,j}); %P60
+%     sici_peaks{5,j} = min(sici_peaks{5,j}); %N100
+%     sici_peaks{6,j} = max(sici_peaks{6,j}); %P180
+% end
+% 
 
