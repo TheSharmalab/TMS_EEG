@@ -77,10 +77,10 @@ for i = 1:15; % per subject
         m1_tep = mean((m1_tep_data)');
         m1_tep_array(i,:) = m1_tep; % this is the time wave 
         for k=1:6; % per peak
-            if rem(k,2) == 0 % if even ie we need a postive numbers
-                myoutpeaks(j,k) = -findpeaks(-m1_tep(str2num(mypeaks(k,2)))); % this needs to be altered with the negative. 
+            if rem(k,2) == 0 % if even ie we need to have postive numbers as positive waves etc. 
+                myoutpeaks(j,k) = -findpeaks(-m1_tep(str2num(mypeaks(k,2)))); %
             else
-               myoutpeaks(j,k) = findpeaks(m1_tep(str2num(mypeaks(k,2)))); % this needs to be altered with the negative. 
+               myoutpeaks(j,k) = findpeaks(m1_tep(str2num(mypeaks(k,2)))); %  
             end
             if  isempty(cell2mat(myoutpeaks(j,k))) == 1
                 myoutpeaks(j,k) = num2cell(m1_tep(i,mywt(:,k)));
