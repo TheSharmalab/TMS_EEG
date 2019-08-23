@@ -4,7 +4,7 @@
 %This is a conversation of Vish's script
 % it has  introduced loops into so the structure is easier to see 
 % the marker data comes from SIGNAL.
-% Use Generate_CONMEP.m to process the condition and the MEP from signal.   
+% Use Generate_CONMEP.m to process the condition and the MEP.   
 % N Sharma Aug 2019
  
 mydir = ('/omega/TMS_EEG_Data');
@@ -28,7 +28,7 @@ combo_myeeg_tep_latency = [];
 combo_myeeg_GMFP_peaks = [];
 
 %j=1; 
-for j=1:8; % per subject loop 
+for j=1:8; 
     % sets up the empty arrays for later on
       myref_tep_peaks = [];
       myref_tep_latency = [];
@@ -42,6 +42,7 @@ for j=1:8; % per subject loop
     re_referenced_eeg = pop_reref( EEG, []);
 
     for k=1:4; % for each condition
+
             myeeg = EEG;
             myref = EEG;
             myindex = conditions==(k);

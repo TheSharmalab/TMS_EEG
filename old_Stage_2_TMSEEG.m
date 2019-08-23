@@ -53,6 +53,10 @@ for j=1:8; % per subject loop
             %myref.trials = myeeg.trials(3); % this is werid in the script I think it shouold be myref.trials = myeeg.trials;
             myref.epoch = myref.epoch(:,myindex);
             %pop_saveset(myref);
+            
+            % Remove from here down 
+            
+            
             %Raw plots
             figure; pop_plottopo(myeeg, mychan , strcat('Condition',num2str(k),'ERP data and scalp maps'), 0, 'ydir',1);
             %figure; pop_timtopo(myeeg,[-100  300], NaN, strcat('Condition',num2str(k),'ERP data and scalp maps')); % this looks wrong 
