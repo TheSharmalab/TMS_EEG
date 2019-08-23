@@ -1,0 +1,516 @@
+---
+title: "Untitled"
+author: "Isabella Kaczmrczyk"
+date: "19/03/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r}
+install.packages("jpeg")
+library(ggpubr)
+library(magrittr)
+library(dplyr)
+library(ggplot2)
+library(ggsignif)
+library(cowplot)
+library(Hmisc)
+library(jpeg)
+library(readr)
+library(broom)
+library(magick)
+
+# this is the processing required for each set of data
+myimport <- function (x) { #FUNCTION NEEDS TO BE INSERTED WITH ""
+  #x <- paste(x,".txt", sep="")
+  x <- read.delim(x, header=TRUE)
+  
+  return(x)
+}
+
+data_summary <- function(x) {
+  m <- mean(x)
+  ymin <- m-sd(x)
+  ymax <- m+sd(x)
+  return(c(y=m,ymin=ymin,ymax=ymax))
+}
+
+```
+
+
+```{r}
+setwd("~/Documents/thesharmalab/TMS_EEG/Paper_figures/")
+myfiles <- list.files() # grabs the list 
+dframes <- lapply(myfiles, myimport)  # importS THEN ALL
+```
+
+
+```{r}
+
+# TMS SICI
+fig1a <- data.frame(dframes[1])
+fig1a$Condition <- factor(fig1a$Condition, levels = c("spTMS", "SICI70", "SICI80", "SICI90"))
+my_1acomparisons <- list( c("spTMS", "SICI70"), c("spTMS", "SICI80"), c("spTMS", "SICI90") )
+
+#TEP
+fig1b <- data.frame(dframes[2])
+fig1b$Peak <- factor(fig1b$Peak, levels = c("N15", "P30", "N45", "P60", "N100", "P180"))
+fig1b$Condition <- factor(fig1b$Condition, levels = c("SP", "SICI_70", "SICI_80", "SICI_90"))
+my_1bcomparisons <- list( c("SP", "SICI_70"))
+                          #, c("SP", "SICI_80"), c("SP", "SICI_90") )
+
+
+#TEP
+fig1c <- data.frame(dframes[3])
+fig1c$Peak <- factor(fig1c$Peak, levels = c("N15", "P30", "N45", "P60", "N100", "P180"))
+fig1c$Condition <- factor(fig1c$Condition, levels = c("SICI_70", "SICI_80", "SICI_90"))
+
+# TMS SICI
+fig1d <- data.frame(dframes[4])
+fig1d$Condition <- factor(fig1d$Condition, levels = c("spTMS", "SICI70"))
+
+# TMS SICI
+fig1e <- data.frame(dframes[5])
+fig1e$Condition <- factor(fig1e$Condition, levels = c("spTMS", "SICI80"))
+
+# TMS SICI
+fig1f <- data.frame(dframes[6])
+fig1f$Condition <- factor(fig1f$Condition, levels = c("spTMS", "SICI90"))
+
+# TMS SICI
+fig2a <- data.frame(dframes[7])
+fig2a$Condition <- factor(fig2a$Condition, levels = c("spTMS", "High ", "Medium", "Low"))
+my_2acomparisons <- list( c("spTMS", "High "), c("spTMS", "Medium"), c("spTMS", "Low") )
+
+#TEP
+fig2b <- data.frame(dframes[8])
+fig2b$Peak <- factor(fig2b$Peak, levels = c("N15", "P30", "N45", "P60", "N100", "P180"))
+fig2b$Condition <- factor(fig2b$Condition, levels = c("spTMS", "High", "Medium", "Low"))
+my_2bcomparisons <- list( c("spTMS", "High"))
+
+#TEP
+fig2c <- data.frame(dframes[9])
+fig2c$Peak <- factor(fig2c$Peak, levels = c("N15", "P30", "N45", "P60", "N100", "P180"))
+fig2c$Condition <- factor(fig2c$Condition, levels = c("High", "Medium", "Low"))
+my_comparisons <- list( c("spTMS", "High"), c("spTMS", "Medium"), c("spTMS", "Low") )
+
+#SICI
+fig2d <- data.frame(dframes[10])
+fig2d$Condition <- factor(fig2d$Condition, levels = c("spTMS", "High"))
+
+#SICI
+fig2e <- data.frame(dframes[11])
+fig2e$Condition <- factor(fig2e$Condition, levels = c("spTMS", "Medium"))
+
+#SICI
+fig2f <- data.frame(dframes[12])
+fig2f$Condition <- factor(fig2f$Condition, levels = c("spTMS", "Low"))
+```
+
+```{r}
+#tep line graphs and rug plots data
+tep70 <- read_csv("~/Documents/thesharmalab/TMS_EEG/Data_array/sici_70_m1_tep_array.csv",col_names = FALSE)
+tep70 <- as.data.frame(tep70)
+colnames(tep70) <- c(1:2000)
+tep70$group <- 1
+##########################
+tepsp <- read_csv("~/Documents/thesharmalab/TMS_EEG/Data_array/sp_m1_tep_array.csv",col_names = FALSE)
+tepsp <- as.data.frame(tepsp)
+colnames(tepsp) <- c(1:2000)
+tepsp$group <- 2
+##############################
+mycomp70 <- bind_rows(tepsp, tep70)
+res <- lapply(mycomp70[,c(1000:1200)], function(x) tidy(wilcox.test(x ~ mycomp70$group, paired = TRUE ))$p.value)
+res <- as.data.frame(res)
+resFDR <- p.adjust(res, method = "fdr", n = length(res))
+fig1d$bin <- 0
+snip <- rep(0, 200)
+snip[resFDR <0.05] <- 1
+library(R.utils)
+mytemp <- insert(fig1d$bin,100,snip) 
+mytemp <- mytemp[1:1202]
+fig1d$bin <- mytemp
+
+tep80 <- read_csv("~/Documents/thesharmalab/TMS_EEG/Data_array/sici_80_m1_tep_array.csv",col_names = FALSE)
+tep80 <- as.data.frame(tep80)
+colnames(tep80) <- c(1:2000)
+tep80$group <- 1
+##########################
+tepsp <- read_csv("~/Documents/thesharmalab/TMS_EEG/Data_array/sp_m1_tep_array.csv",col_names = FALSE)
+tepsp <- as.data.frame(tepsp)
+colnames(tepsp) <- c(1:2000)
+tepsp$group <- 2
+##############################
+mycomp80 <- bind_rows(tepsp, tep80)
+res <- lapply(mycomp80[,c(1000:1200)], function(x) tidy(wilcox.test(x ~ mycomp80$group, paired = TRUE ))$p.value)
+res <- as.data.frame(res)
+resFDR <- p.adjust(res, method = "fdr", n = length(res))
+fig1e$bin <- 0
+snip <- rep(0, 200)
+snip[resFDR <0.05] <- 1
+library(R.utils)
+mytemp <- insert(fig1e$bin,100,snip) 
+mytemp <- mytemp[1:1202]
+fig1e$bin <- mytemp
+
+tep90 <- read_csv("~/Documents/thesharmalab/TMS_EEG/Data_array/sici_90_m1_tep_array.csv",col_names = FALSE)
+tep90 <- as.data.frame(tep90)
+colnames(tep90) <- c(1:2000)
+tep90$group <- 1
+##########################
+tepsp <- read_csv("~/Documents/thesharmalab/TMS_EEG/Data_array/sp_m1_tep_array.csv",col_names = FALSE)
+tepsp <- as.data.frame(tepsp)
+colnames(tepsp) <- c(1:2000)
+tepsp$group <- 2
+##############################
+mycomp90 <- bind_rows(tepsp, tep90)
+res <- lapply(mycomp90[,c(1000:1200)], function(x) tidy(wilcox.test(x ~ mycomp90$group, paired = TRUE ))$p.value)
+res <- as.data.frame(res)
+resFDR <- p.adjust(res, method = "none", n = length(res))
+fig1f$bin <- 0
+snip <- rep(0, 200)
+snip[resFDR <0.05] <- 1
+library(R.utils)
+mytemp <- insert(fig1f$bin,100,snip) 
+mytemp <- mytemp[1:1202]
+fig1f$bin <- mytemp
+```
+
+```{r}
+
+plot1a <-ggviolin(data = fig1a,x = "Condition", y = "MEP",fill = "Condition",
+  palette = c("#BABABA", "#92C5DE","#FFEC8B", "#B8E186")) +
+  geom_dotplot(binaxis="y",stackdir="center",binwidth=0.04,alpha = 0.35)+
+  stat_summary(fun.data = "mean_cl_boot", colour = "black", size = 0.25,fill='black')+
+  theme_classic() +
+  stat_compare_means(comparisons = my_1acomparisons, method = "wilcox.test", paired = TRUE, label.y = c(2,2.3, 2.6),hide.ns = TRUE,label = "p.signif") +
+  theme(text = element_text(size=7), axis.text.x=element_blank(), legend.title = element_blank(),legend.position = "right", legend.spacing.x = unit(0.35, 'cm')) +
+  labs(x = "",y= "Motor Evoked Potential (mV)")
+
+plot1b <-ggviolin(data = fig1b, x = "Condition", y = "TEP", fill = "Condition", palette = c("#BABABA", "#92C5DE","#FFEC8B", "#B8E186"))+
+  facet_wrap(~ Peak, ncol = 6, strip.position = "bottom") +
+  geom_dotplot(binaxis="y",stackdir="center",binwidth=0.4,alpha = 0.35) +
+   stat_summary(fun.data = "mean_cl_boot", colour = "black", size = 0.25,fill='black') +
+  theme_classic() +
+  geom_hline(yintercept=0, color = "black", size=0.35)+
+  theme(axis.line.x=element_blank(),text = element_text(size=7),axis.text.x = element_blank(), axis.ticks.x = element_blank(),legend.title = element_blank(), legend.position="none") + 
+  stat_compare_means(comparisons = my_1bcomparisons, method = "wilcox.test", paired = TRUE, label.y = 17,hide.ns = TRUE,label = "p.signif", tip.length = 0.05) +
+  #stat_compare_means(method = "wilcox.test", paired = TRUE, ref.group = "SP",hide.ns = TRUE,label = "p.signif", label.y = 19)+
+  labs(x = "Peak",y= "TMS-Evoked Potential (µV)")
+
+
+plot1c <- ggboxplot(data = fig1c, x = "Condition", y = "TEP_change", fill = "Condition", xlab ="", palette = c("#92C5DE","#FFEC8B", "#B8E186"))  +
+  facet_wrap(~ Peak, ncol = 6, strip.position = "bottom") +
+  #geom_dotplot(binaxis="y",stackdir="center",binwidth=0.4,alpha = 0.35) + 
+  #stat_summary(fun.data = "mean_cl_boot", colour = "black", size = 0.5,fill='black') +  
+  #geom_hline(yintercept=0, color = "black", size=0.35)+
+  theme_classic() +
+  ylim(c(-120,100)) +
+  geom_hline(yintercept=0, color = "black", size=0.35)+
+  theme(axis.line.x=element_blank(),panel.spacing = unit (1.4,"lines"),text = element_text(size=7), axis.text.x = element_blank(), axis.ticks.x = element_blank()) + 
+  theme(legend.position="none", legend.title = element_blank()) +
+  labs(x = "Peak",y= "% change from spTMS TEP peak")
+
+
+
+plot1d <- ggplot(data = fig1d, aes(x = Time, y = TEP, group = Condition))+
+  ylim(c(-6, 6))+
+  geom_errorbar(aes(ymin=TEP-SE, ymax=TEP+SE, group = Condition, color = Condition)) +
+  geom_line() +
+  geom_rug(data = subset(fig1d, bin == '1'), aes(x = Time), inherit.aes = F) +
+  xlab("") +
+  ylab("TEP Amplitude /µV") +
+  scale_color_manual(values=c("#BABABA", "#92C5DE"))+
+  theme_classic() +
+  theme(text = element_text(size=8),legend.position="none", legend.title = element_blank())
+
+plot1e <- ggplot(data = fig1e, aes(x = Time, y = TEP, group = Condition))+
+  ylim(c(-6, 6))+
+  geom_errorbar(aes(ymin=TEP-SE, ymax=TEP+SE, group = Condition, color = Condition)) +
+  geom_line() +
+  geom_rug(data = subset(fig1e, bin == '1'), aes(x = Time), inherit.aes = F) +
+  xlab("Time /ms") +
+  ylab("") +
+  scale_color_manual(values=c("#BABABA", "#FFEC8B"))+
+  theme_classic() +
+  theme(axis.line.y= element_blank(),axis.text.y=element_blank(),axis.ticks.y=element_blank(), text = element_text(size=8),legend.position="none", legend.title = element_blank())
+
+plot1f <- ggplot(data = fig1f, aes(x = Time, y = TEP, group = Condition))+
+  ylim(c(-6, 6))+
+  geom_errorbar(aes(ymin=TEP-SE, ymax=TEP+SE, group = Condition, color = Condition)) +
+  geom_line() +
+  geom_rug(data = subset(fig1f, bin == '1'), aes(x = Time), inherit.aes = F) +
+  xlab("") +
+  ylab("") +
+  scale_color_manual(values=c("#BABABA", "#B8E186"))+
+  theme_classic() +
+  theme(axis.line.y= element_blank(), axis.text.y=element_blank(),axis.ticks.y=element_blank(), text = element_text(size=8),legend.position="none", legend.title = element_blank())
+```
+
+```{r}
+#sclap plots
+#import and name plots
+sp15_path <- "~/Documents/thesharmalab/TMS_EEG/Scalp_plots_TMSEEG_paper/sp15.jpg"
+sp15 <- image_read(sp15_path)
+sp30_path <- "~/Documents/thesharmalab/TMS_EEG/Scalp_plots_TMSEEG_paper/sp30.jpg"
+sp30 <- image_read(sp30_path)
+sp45_path <- "~/Documents/thesharmalab/TMS_EEG/Scalp_plots_TMSEEG_paper/sp45.jpg"
+sp45 <- image_read(sp45_path)
+sp60_path <- "~/Documents/thesharmalab/TMS_EEG/Scalp_plots_TMSEEG_paper/sp60.jpg"
+sp60 <- image_read(sp60_path)
+sp100_path <- "~/Documents/thesharmalab/TMS_EEG/Scalp_plots_TMSEEG_paper/sp100.jpg"
+sp100 <- image_read(sp100_path)
+sp180_path <- "~/Documents/thesharmalab/TMS_EEG/Scalp_plots_TMSEEG_paper/sp180.jpg"
+sp180 <- image_read(sp180_path)
+
+pp7015_path <- "~/Documents/thesharmalab/TMS_EEG/Scalp_plots_TMSEEG_paper/pp7015.jpg"
+pp7015 <- image_read(pp7015_path)
+pp7030_path <- "~/Documents/thesharmalab/TMS_EEG/Scalp_plots_TMSEEG_paper/pp7030.jpg"
+pp7030 <- image_read(pp7030_path)
+pp7045_path <- "~/Documents/thesharmalab/TMS_EEG/Scalp_plots_TMSEEG_paper/pp7045.jpg"
+pp7045 <- image_read(pp7045_path)
+pp7060_path <- "~/Documents/thesharmalab/TMS_EEG/Scalp_plots_TMSEEG_paper/pp7060.jpg"
+pp7060 <- image_read(pp7060_path)
+pp70100_path <- "~/Documents/thesharmalab/TMS_EEG/Scalp_plots_TMSEEG_paper/pp70100.jpg"
+pp70100 <- image_read(pp70100_path)
+pp70180_path <- "~/Documents/thesharmalab/TMS_EEG/Scalp_plots_TMSEEG_paper/pp70180.jpg"
+pp70180 <- image_read(pp70180_path)
+
+pp8015_path <- "~/Documents/thesharmalab/TMS_EEG/Scalp_plots_TMSEEG_paper/pp8015.jpg"
+pp8015 <- image_read(pp8015_path)
+pp8030_path <- "~/Documents/thesharmalab/TMS_EEG/Scalp_plots_TMSEEG_paper/pp8030.jpg"
+pp8030 <- image_read(pp8030_path)
+pp8045_path <- "~/Documents/thesharmalab/TMS_EEG/Scalp_plots_TMSEEG_paper/pp8045.jpg"
+pp8045 <- image_read(pp8045_path)
+pp8060_path <- "~/Documents/thesharmalab/TMS_EEG/Scalp_plots_TMSEEG_paper/pp8060.jpg"
+pp8060 <- image_read(pp8060_path)
+pp80100_path <- "~/Documents/thesharmalab/TMS_EEG/Scalp_plots_TMSEEG_paper/pp80100.jpg"
+pp80100 <- image_read(pp80100_path)
+pp80180_path <- "~/Documents/thesharmalab/TMS_EEG/Scalp_plots_TMSEEG_paper/pp80180.jpg"
+pp80180 <- image_read(pp80180_path)
+
+pp9015_path <- "~/Documents/thesharmalab/TMS_EEG/Scalp_plots_TMSEEG_paper/pp9015.jpg"
+pp9015 <- image_read(pp9015_path)
+pp9030_path <- "~/Documents/thesharmalab/TMS_EEG/Scalp_plots_TMSEEG_paper/pp9030.jpg"
+pp9030 <- image_read(pp9030_path)
+pp9045_path <- "~/Documents/thesharmalab/TMS_EEG/Scalp_plots_TMSEEG_paper/pp9045.jpg"
+pp9045 <- image_read(pp9045_path)
+pp9060_path <- "~/Documents/thesharmalab/TMS_EEG/Scalp_plots_TMSEEG_paper/pp9060.jpg"
+pp9060 <- image_read(pp9060_path)
+pp90100_path <- "~/Documents/thesharmalab/TMS_EEG/Scalp_plots_TMSEEG_paper/pp90100.jpg"
+pp90100 <- image_read(pp90100_path)
+pp90180_path <- "~/Documents/thesharmalab/TMS_EEG/Scalp_plots_TMSEEG_paper/pp90180.jpg"
+pp90180 <- image_read(pp90180_path)
+
+#convert plots to ggplot-compatible images
+sp15_image <- ggdraw() + draw_image(sp15)
+sp30_image <- ggdraw() + draw_image(sp30)
+sp45_image <- ggdraw() + draw_image(sp45)
+sp60_image <- ggdraw() + draw_image(sp60)
+sp100_image <- ggdraw() + draw_image(sp100)
+sp180_image <- ggdraw() + draw_image(sp180)
+
+pp7015_image <- ggdraw() + draw_image(pp7015)
+pp7030_image <- ggdraw() + draw_image(pp7030)
+pp7045_image <- ggdraw() + draw_image(pp7045)
+pp7060_image <- ggdraw() + draw_image(pp7060)
+pp70100_image <- ggdraw() + draw_image(pp70100)
+pp70180_image <- ggdraw() + draw_image(pp70180)
+
+pp8015_image <- ggdraw() + draw_image(pp8015)
+pp8030_image <- ggdraw() + draw_image(pp8030)
+pp8045_image <- ggdraw() + draw_image(pp8045)
+pp8060_image <- ggdraw() + draw_image(pp8060)
+pp80100_image <- ggdraw() + draw_image(pp80100)
+pp80180_image <- ggdraw() + draw_image(pp80180)
+
+pp9015_image <- ggdraw() + draw_image(pp9015)
+pp9030_image <- ggdraw() + draw_image(pp9030)
+pp9045_image <- ggdraw() + draw_image(pp9045)
+pp9060_image <- ggdraw() + draw_image(pp9060)
+pp90100_image <- ggdraw() + draw_image(pp90100)
+pp90180_image <- ggdraw() + draw_image(pp90180)
+
+#group scalp plots
+spscalpplots <- plot_grid(sp15_image, sp30_image, sp45_image, sp60_image, sp100_image, sp180_image, ncol = 6, nrow =1)
+pp70scalpplots <-plot_grid(pp7015_image, pp7030_image, pp7045_image, pp7060_image, pp70100_image, pp70180_image, ncol = 6, nrow =1)
+pp80scalpplots <-plot_grid(pp8015_image, pp8030_image, pp8045_image, pp8060_image, pp80100_image, pp80180_image, ncol = 6, nrow =1)
+pp90scalpplots <-plot_grid(pp9015_image, pp9030_image, pp9045_image, pp9060_image, pp90100_image, pp90180_image, ncol = 6, nrow =1)
+
+ScalpPlots <- plot_grid(spscalpplots,pp70scalpplots,pp80scalpplots, pp90scalpplots, nrow = 4)
+```
+
+```{r}
+
+theme_set(theme_cowplot(font_size=8)) # reduce default font size
+
+#TEP raw plots
+TEPrawplots <- plot_grid(plot1d, plot1e, plot1f, align = "h", ncol = 3, nrow = 1)
+plotafinal <- plot_grid(plot1a, NULL)
+#plotde <- plot_grid(plot1b, plot1c, labels = c('D', 'E'))
+
+fig1 <- plot_grid(plotafinal, TEPrawplots, ScalpPlots, plot1b, plot1c, labels = c('A', 'B', '', 'D', 'E'), align = "h", ncol = 1,nrow = 5)
+
+ggsave("~/Desktop/test1.png", dpi = 300, width = 20, height = 25, units = "cm")
+
+```
+
+
+
+
+
+
+
+
+
+
+```{r}
+#tep line graphs and rug plots data
+tephigh <- read_csv("~/Documents/thesharmalab/TMS_EEG/Data_array/sici_High_m1_tep_array.csv",col_names = FALSE)
+tephigh <- as.data.frame(tephigh)
+colnames(tephigh) <- c(1:2000)
+tephigh$group <- 1
+##########################
+tepsp <- read_csv("~/Documents/thesharmalab/TMS_EEG/Data_array/sp_m1_tep_array.csv",col_names = FALSE)
+tepsp <- as.data.frame(tepsp)
+colnames(tepsp) <- c(1:2000)
+tepsp$group <- 2
+##############################
+mycomphigh <- bind_rows(tepsp, tephigh)
+res <- lapply(mycomphigh[,c(1000:1200)], function(x) tidy(wilcox.test(x ~ mycomphigh$group, paired = TRUE ))$p.value)
+res <- as.data.frame(res)
+resFDR <- p.adjust(res, method = "fdr", n = length(res))
+fig2d$bin <- 0
+snip <- rep(0, 200)
+snip[resFDR <0.05] <- 1
+library(R.utils)
+mytemp <- insert(fig2d$bin,100,snip) 
+mytemp <- mytemp[1:1202]
+fig2d$bin <- mytemp
+
+tepmedium <- read_csv("~/Documents/thesharmalab/TMS_EEG/Data_array/sici_Medium_m1_tep_array.csv",col_names = FALSE)
+tepmedium <- as.data.frame(tepmedium)
+colnames(tepmedium) <- c(1:2000)
+tepmedium$group <- 1
+##########################
+tepsp <- read_csv("~/Documents/thesharmalab/TMS_EEG/Data_array/sp_m1_tep_array.csv",col_names = FALSE)
+tepsp <- as.data.frame(tepsp)
+colnames(tepsp) <- c(1:2000)
+tepsp$group <- 2
+##############################
+mycompmedium <- bind_rows(tepsp, tepmedium)
+res <- lapply(mycompmedium[,c(1000:1200)], function(x) tidy(wilcox.test(x ~ mycompmedium$group, paired = TRUE ))$p.value)
+res <- as.data.frame(res)
+resFDR <- p.adjust(res, method = "fdr", n = length(res))
+fig2e$bin <- 0
+snip <- rep(0, 200)
+snip[resFDR <0.05] <- 1
+library(R.utils)
+mytemp <- insert(fig2e$bin,100,snip) 
+mytemp <- mytemp[1:1202]
+fig2e$bin <- mytemp
+
+teplow <- read_csv("~/Documents/thesharmalab/TMS_EEG/Data_array/sici_Low_m1_tep_array.csv",col_names = FALSE)
+teplow <- as.data.frame(teplow)
+colnames(teplow) <- c(1:2000)
+teplow$group <- 1
+##########################
+tepsp <- read_csv("~/Documents/thesharmalab/TMS_EEG/Data_array/sp_m1_tep_array.csv",col_names = FALSE)
+tepsp <- as.data.frame(tepsp)
+colnames(tepsp) <- c(1:2000)
+tepsp$group <- 2
+##############################
+mycomplow <- bind_rows(tepsp, teplow)
+res <- lapply(mycomplow[,c(1000:1200)], function(x) tidy(wilcox.test(x ~ mycomplow$group, paired = TRUE ))$p.value)
+res <- as.data.frame(res)
+resFDR <- p.adjust(res, method = "none", n = length(res))
+fig2f$bin <- 0
+snip <- rep(0, 200)
+snip[resFDR <0.05] <- 1
+library(R.utils)
+mytemp <- insert(fig2f$bin,100,snip) 
+mytemp <- mytemp[1:1202]
+fig2f$bin <- mytemp
+```
+
+
+```{r}
+
+plot2d <- ggplot(data = fig2d, aes(x = Time, y = TEP, group = Condition))+
+  ylim(c(-6, 6))+
+  geom_errorbar(aes(ymin=TEP-SE, ymax=TEP+SE, group = Condition, color = Condition)) +
+  geom_line() +
+  geom_rug(data = subset(fig2d, bin == '1'), aes(x = Time), inherit.aes = F) +
+  xlab("") +
+  ylab("TEP Amplitude /µV") +
+  scale_color_manual(values=c("#BABABA", "#FEBCC8"))+
+  theme_classic() +
+  theme(text = element_text(size=8),legend.title = element_blank(),legend.position = "none")
+
+plot2e <- ggplot(data = fig2e, aes(x = Time, y = TEP, group = Condition))+
+  ylim(c(-6, 6))+
+  geom_errorbar(aes(ymin=TEP-SE, ymax=TEP+SE, group = Condition, color = Condition)) +
+  geom_line() +
+  geom_rug(data = subset(fig2e, bin == '1'), aes(x = Time), inherit.aes = F) +
+  xlab("Time /ms") +
+  ylab("") +
+  scale_color_manual(values=c("#BABABA", "#e0bbe4"))+
+  theme_classic() +
+  theme(text = element_text(size=8),legend.title = element_blank(),legend.position = "none")
+  #theme(axis.line.y= element_blank(),axis.text.y=element_blank(),axis.ticks.y=element_blank(), text = element_text(size=8),legend.title = element_blank(),legend.position = "none")
+
+plot2f <- ggplot(data = fig2f, aes(x = Time, y = TEP, group = Condition))+
+  ylim(c(-6, 6))+
+  geom_errorbar(aes(ymin=TEP-SE, ymax=TEP+SE, group = Condition, color = Condition)) +
+  geom_line() +
+  geom_rug(data = subset(fig2f, bin == '1'), aes(x = Time), inherit.aes = F) +
+  xlab("") +
+  ylab("") +
+  scale_color_manual(values=c("#BABABA", "#89cff0"))+
+  theme_classic() +
+  theme(text = element_text(size=8),legend.title = element_blank(),legend.position = "none")
+  #theme(axis.line.y= element_blank(), axis.text.y=element_blank(),axis.ticks.y=element_blank(), text = element_text(size=8),legend.title = element_blank(),legend.position = "none")
+```
+
+```{r}
+
+theme_set(theme_cowplot(font_size=8)) # reduce default font size
+
+#TEP raw plots
+TEPrawplots <- plot_grid(plot2d, plot2e, plot2f, align = "h", ncol = 2, nrow = 2)
+
+ggsave("~/Desktop/test2.png", dpi = 300, width = 20, height = 16, units = "cm")
+```
+
+```{r}
+fig1cstats70 <- read_csv("~/Documents/thesharmalab/TMS_EEG/Paper_figures_copy/fig1cdata70.csv",col_names = FALSE)
+fig1cstats80 <- read_csv("~/Documents/thesharmalab/TMS_EEG/Paper_figures_copy/fig1cdata80.csv",col_names = FALSE)
+fig1cstats90 <- read_csv("~/Documents/thesharmalab/TMS_EEG/Paper_figures_copy/fig1cdata90.csv",col_names = FALSE)
+
+wilcox.test(fig1cstats70$X1, mu = 0, alternative = "two.sided")
+wilcox.test(fig1cstats70$X2, mu = 0, alternative = "two.sided")
+wilcox.test(fig1cstats70$X3, mu = 0, alternative = "two.sided")
+wilcox.test(fig1cstats70$X4, mu = 0, alternative = "two.sided")
+wilcox.test(fig1cstats70$X5, mu = 0, alternative = "two.sided")
+wilcox.test(fig1cstats70$X6, mu = 0, alternative = "two.sided")
+
+wilcox.test(fig1cstats80$X1, mu = 0, alternative = "two.sided")
+wilcox.test(fig1cstats80$X2, mu = 0, alternative = "two.sided")
+wilcox.test(fig1cstats80$X3, mu = 0, alternative = "two.sided")
+wilcox.test(fig1cstats80$X4, mu = 0, alternative = "two.sided")
+wilcox.test(fig1cstats80$X5, mu = 0, alternative = "two.sided")
+wilcox.test(fig1cstats80$X6, mu = 0, alternative = "two.sided")
+
+wilcox.test(fig1cstats90$X1, mu = 0, alternative = "two.sided")
+wilcox.test(fig1cstats90$X2, mu = 0, alternative = "two.sided")
+wilcox.test(fig1cstats90$X3, mu = 0, alternative = "two.sided")
+wilcox.test(fig1cstats90$X4, mu = 0, alternative = "two.sided")
+wilcox.test(fig1cstats90$X5, mu = 0, alternative = "two.sided")
+wilcox.test(fig1cstats90$X6, mu = 0, alternative = "two.sided")
+
+
+```
