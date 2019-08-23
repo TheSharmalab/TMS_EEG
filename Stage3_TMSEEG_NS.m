@@ -62,13 +62,13 @@ STUDY = pop_savestudy( STUDY, EEG );
 
 sp_peaks ={};
 sici_peaks = {};
-p_value_t_test = [];
+
 
 for i = 1:15; % per subject 
-
+% the number are electrode location within the study changrp 
 sp_m1_tep_data = [STUDY.changrp(8).erpdata{1, 1}(:,i) STUDY.changrp(12).erpdata{1, 1}(:,i) STUDY.changrp(40).erpdata{1, 1}(:,i) STUDY.changrp(43).erpdata{1, 1}(:,i)];
 sp_m1_tep = mean((sp_m1_tep_data)');
-sp_m1_tep_array(i,:) = sp_m1_tep;
+sp_m1_tep_array(i,:) = sp_m1_tep; % this is the time wave 
 
 sp_N15 = -findpeaks(-sp_m1_tep(1001:1021));
 sp_P30 = findpeaks(sp_m1_tep(1016:1036));
@@ -118,21 +118,21 @@ end
 if isempty(cell2mat(sici_peaks(2,i))) == 1
     sici_peaks(2,i) = num2cell(sici_m1_tep(1031));
 end
-    if isempty(cell2mat(sici_peaks(3,i))) == 1
-    sici_peaks(3,i) = num2cell(sici_m1_tep(1046));
-    end
-    if isempty(cell2mat(sici_peaks(4,i))) == 1
-    sici_peaks(4,i) = num2cell(sici_m1_tep(1061));
-    end
-    if isempty(cell2mat(sici_peaks(5,i))) == 1
-    sici_peaks(5,i) = num2cell(sici_m1_tep(1101));
-    end
-    if isempty(cell2mat(sici_peaks(6,i))) == 1
-    sici_peaks(6,i) = num2cell(sici_m1_tep(1181));
-    end
+if isempty(cell2mat(sici_peaks(3,i))) == 1
+sici_peaks(3,i) = num2cell(sici_m1_tep(1046));
+end
+if isempty(cell2mat(sici_peaks(4,i))) == 1
+sici_peaks(4,i) = num2cell(sici_m1_tep(1061));
+end
+if isempty(cell2mat(sici_peaks(5,i))) == 1
+sici_peaks(5,i) = num2cell(sici_m1_tep(1101));
+end
+if isempty(cell2mat(sici_peaks(6,i))) == 1
+sici_peaks(6,i) = num2cell(sici_m1_tep(1181));
+end
 end
 
-for j = 1:length(sp_peaks)
+for j = 1:length(sp_peaks) 
     sp_peaks{1,j} = min(sp_peaks{1,j}); %N15
     sp_peaks{2,j} = max(sp_peaks{2,j}); %P30
     sp_peaks{3,j} = min(sp_peaks{3,j}); %N45
