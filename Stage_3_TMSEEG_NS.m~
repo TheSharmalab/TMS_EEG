@@ -85,23 +85,18 @@ end
 
 peaks = ones(6,15,4); %Sets up the array where the peaks will be stored
 
-for i = 1:length(STUDY.subject)
+for i = 1:numsubjects
 for j = 1:length(mycon)
 tep_data = [STUDY.changrp(8).erpdata{j, 1}(:,i) STUDY.changrp(12).erpdata{j, 1}(:,i) STUDY.changrp(40).erpdata{j, 1}(:,i) STUDY.changrp(43).erpdata{j, 1}(:,i)];
 mean_tep = mean((tep_data)');
-tep_array(i,:,j) = mean_tep; %Calculates the mean M1 TEP and puts it into a 3D array (subjects x time x condition)
+tep_array(i,:,j) = mean_tep; %Calculates the mean M1 TEP and puts it into a 3D array (subjects x
 
-% This section extracts each peak. Finds the min/max peak between time
-% intervals. 
 N15 = min(-findpeaks(-mean_tep(1001:1021)));
 P30 = max(findpeaks(mean_tep(1016:1036)));
 N45 = min(-findpeaks(-mean_tep(1032:1056)));
 P60 = max(findpeaks(mean_tep(1049:1071)));
 N100 = min(-findpeaks(-mean_tep(1091:1151)));
 P180 = max(findpeaks(mean_tep(1151:1251)));
-
-%Next section fills in the value of the ERP at that time point (extrapolates) if a peak
-%cannot be found. 
 
 if isempty(N15) == 1
     N15 = mean_tep(1016);
@@ -122,7 +117,7 @@ if isempty(P180) == 1
     P180 = mean_tep(1181);
 end
 
-peaks(:,i,j) = [N15; P30; N45; P60; N100; P180;]; %summary 3D array (peak x subject x condition)
+peaks(:,i,j) = [N15; P30; N45; P60; N100; P180];
 
 end
 end
