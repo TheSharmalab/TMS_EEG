@@ -84,40 +84,80 @@ STUDY.changrp(i).erptimes = erptimes;
 end
 
 peaks = ones(6,15,4); %Sets up the array where the peaks will be stored
+output = {};
+k = [1:6];
 
-for i = 1:numsubjects
+for i = 1:length(STUDY.subject)
+    for j = 1:length(mycon)
+    
+    tep_data = [STUDY.changrp(8).erpdata{j, 1}(:,i) STUDY.changrp(12).erpdata{j, 1}(:,i) STUDY.changrp(40).erpdata{j, 1}(:,i) STUDY.changrp(43).erpdata{j, 1}(:,i)];
+    mean_tep = mean((tep_data)');
+    tep_array(i,:,j) = mean_tep; %Calculates the mean M1 TEP and puts it into a 3D array (subjects x time x condition)
+
+    % This section extracts each peak. Finds the min/max peak between time
+    % intervals. 
+    N15 = min(-findpeaks(-mean_tep(1001:1021)));
+    P30 = max(findpeaks(mean_tep(1016:1036)));
+    N45 = min(-findpeaks(-mean_tep(1032:1056)));
+    P60 = max(findpeaks(mean_tep(1049:1071)));
+    N100 = min(-findpeaks(-mean_tep(1091:1151)));
+    P180 = max(findpeaks(mean_tep(1151:1251)));
+
+    %Next section fills in the value of the ERP at that time point (extrapolates) if a peak
+    %cannot be found. 
+
+    if isempty(N15) == 1
+        N15 = mean_tep(1016);
+    end
+    if isempty(P30) == 1
+        P30 = mean_tep(1031);
+    end
+    if isempty(N45) == 1
+        N45 = mean_tep(1046);
+    end
+    if isempty(P60) == 1
+        P60 = mean_tep(1061);
+    end
+    if isempty(N100) == 1
+        N100 = mean_tep(1101);
+    end
+    if isempty(P180) == 1
+        P180 = mean_tep(1181);
+    end
+
+    peaks(:,i,j) = [N15; P30; N45; P60; N100; P180;]; %summary 3D array (peak x subject x condition)
+    output(k,[1:4]) = {'N15',N15,i,j;'P30',P30,i,j;'N45',N45,i,j;'P60',P60,i,j;'N100',N100,i,j;'P180',P180,i,j};%prepares output structure for transfer to R.
+    % Col1 = peak name, Col2 = peak amplitude, Col3 = subjectID, Col4 =
+    % condition. 
+
+    k = k+6;
+end
+end
+
+save('combo_myeeg_tep_peaks.txt', 'output'); 
+
+%Calculate mean and SEM of each TEP for each condition
+
+mean_tep_output=[];
+
 for j = 1:length(mycon)
-tep_data = [STUDY.changrp(8).erpdata{j, 1}(:,i) STUDY.changrp(12).erpdata{j, 1}(:,i) STUDY.changrp(40).erpdata{j, 1}(:,i) STUDY.changrp(43).erpdata{j, 1}(:,i)];
-mean_tep = mean((tep_data)');
-tep_array(i,:,j) = mean_tep; %Calculates the mean M1 TEP and puts it into a 3D array (subjects x
-
-N15 = min(-findpeaks(-mean_tep(1001:1021)));
-P30 = max(findpeaks(mean_tep(1016:1036)));
-N45 = min(-findpeaks(-mean_tep(1032:1056)));
-P60 = max(findpeaks(mean_tep(1049:1071)));
-N100 = min(-findpeaks(-mean_tep(1091:1151)));
-P180 = max(findpeaks(mean_tep(1151:1251)));
-
-if isempty(N15) == 1
-    N15 = mean_tep(1016);
-end
-if isempty(P30) == 1
-    P30 = mean_tep(1031);
-end
-if isempty(N45) == 1
-    N45 = mean_tep(1046);
-end
-if isempty(P60) == 1
-    P60 = mean_tep(1061);
-end
-if isempty(N100) == 1
-    N100 = mean_tep(1101);
-end
-if isempty(P180) == 1
-    P180 = mean_tep(1181);
+        temp = [];
+        temp = (mean(tep_array(:,:,j),1))';
+        temp(:,2) = std(tep_array(:,:,j)/sqrt(length(STUDY.subject)));
+        temp(:,3) = j;
+        temp(:,4) = STUDY.changrp(1).erptimes';
+        mean_tep_output = vertcat(mean_tep_output,temp);
+        %resultant array is 8000 x 4. Col1 = TEP amplitude, Col2 = TEP SEM,
+        %Col3 = condition, Col4 = time
 end
 
-peaks(:,i,j) = [N15; P30; N45; P60; N100; P180];
+save('combo_myeeg_tep_waveforms.txt', 'mean_tep_output'); 
 
-end
-end
+%Calculate arithmetic difference between one TEP and another
+%TO ADD WHEN CONDITIONS AND COMPARISONS ARE KNOWN
+plot(STUDY.changrp(1).erptimes,mean_tep_output(find(mean_tep_output(:,3) == 1))) %plots condition 1
+hold on
+plot(STUDY.changrp(1).erptimes,mean_tep_output(find(mean_tep_output(:,3) == 2))) %plots condition 2
+hold on
+plot(STUDY.changrp(1).erptimes,mean_tep_output(find(mean_tep_output(:,3) == 1))-mean_tep_output(find(mean_tep_output(:,3) == 2))); %plots the subtraction of 2 from 1
+
