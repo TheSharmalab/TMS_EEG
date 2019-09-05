@@ -21,3 +21,4 @@ for k=1:8;
     mydata = vertcat(mydata,mycon);
 end
 save('allsubjects_conMEP.txt', 'mydata', '-ascii'); 
+
