@@ -16,8 +16,8 @@ for j=1:8 % per subject
         mysave = strcat('S',num2str(j),'_',state,'.set'); % this the correct file format for Stage 3
         % save dataset - CHANGE FILENAME 
         EEG = pop_saveset( EEG, 'filename',mysave,'filepath',mydir);
-        [ALLEEG EEG] = eeg_store(ALLEEG, EEG, CURRENTSET);
-        ALLEEG = pop_delset( ALLEEG, [1] );
-        STUDY = []; CURRENTSTUDY = 0; ALLEEG = []; EEG=[]; CURRENTSET=[];
+%         [ALLEEG EEG] = eeg_store(ALLEEG, EEG, CURRENTSET);
+%         ALLEEG = pop_delset( ALLEEG, [1] );
+%         STUDY = []; CURRENTSTUDY = 0; ALLEEG = []; EEG=[]; CURRENTSET=[];
     end
 end 
