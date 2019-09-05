@@ -25,7 +25,7 @@ mycon = ["70","70.70","70.120","120"];
 
 for j=1:8 % per subject 
     for k=1:length(mycon)
-        filename = strcat('HV00',num2str(k),'_add_preprocessed','.mat');  % alter this to include Izzy's filename from stage 1 
+        filename = strcat('HV00',num2str(j),'_add_preprocessed','.mat');  % alter this to include Izzy's filename from stage 1 
         load(filename);
         state=mycon{k};
         mysave = strcat('S',num2str(j),'_',state,'.set'); % this the correct file format for Stage 3

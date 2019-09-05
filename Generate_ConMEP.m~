@@ -16,8 +16,8 @@ for k=1:8;
         mytempcon = dlmread(file,'\t',1,0);
         mycon = vertcat(mycon,mytempcon); 
     end
-    save(strcat('HV00',num2str(k),'_CONMEP.txt'), 'mycon', '-ascii'); 
+    save(strcat('HV00',num2str(k),'_CONMEP.txt', '-as), 'mycon'); 
     mycon(:,3) = [k];
     mydata = vertcat(mydata,mycon);
 end
-save('allsubjects_conMEP.txt', 'mydata', '-ascii'); 
+save('allsubjects_conMEP.txt', 'mydata'); 
