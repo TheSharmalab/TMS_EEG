@@ -17,10 +17,10 @@ for k=1:8;
         load(filename); % loads the .mat
         file = strcat('HV00',num2str(k),'_ADD_',num2str(j),'.txt'); 
         mytempcon = dlmread(file,'\t',1,0); % reads in all the MEP and conditions
-        mytempcon(index_rejected_trials,:) = 0; % removes the rejected files
-        mytempcon( ~any(mytempcon,2), : ) = [];  %delete rows with 0
         mycon = vertcat(mycon,mytempcon); 
     end
+        mycon(index_rejected_trials,:) = 0; % removes the rejected files
+        mycon( ~any(mycon,2), : ) = [];  %delete rows with 0
     save(strcat('HV00',num2str(k),'_CONMEP.txt'), 'mycon', '-ascii'); 
     mycon(:,3) = [k];
     mydata = vertcat(mydata,mycon);
