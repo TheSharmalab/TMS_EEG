@@ -3,8 +3,8 @@
 % and the MEP peak. It assumes that there are four files per subject
 % N Sharma 8/21/19
 
-mydir = ('/omega/TMS_EEG_Data');
-mymdir = ('/omega/TMS_EEG_Data/marker_data'); % this is data from Signal
+mydir = ('/Users/Isabella/Documents/thesharmalab/TMS_EEG/Additional_Experiments/Preprocessed_data');
+mymdir = ('/Users/Isabella/Documents/thesharmalab/TMS_EEG/Additional_Experiments/Preprocessed_data/marker_data'); % this is data from Signal
 
 cd(mymdir);  
 

@@ -7,12 +7,12 @@
 % Use Generate_CONMEP.m to process the condition and the MEP from signal.   
 % N Sharma Aug 2019
  
-mydir = ('/omega/TMS_EEG_Data');
+mydir = ('/Users/Isabella/Documents/thesharmalab/TMS_EEG/Additional_Experiments/Preprocessed_data');
 mycon=[ 1 2 3 4];
 mychan = [1:63];
 mywin = [-100  300];
 addpath(genpath('/Applications/MATLAB_R2019a.app/toolbox/eeglab14_1_1b'))
-mymdir = ('/omega/TMS_EEG_Data/marker_data'); % this is data from Signal
+mymdir = ('/Users/Isabella/Documents/thesharmalab/TMS_EEG/Additional_Experiments/Preprocessed_data/marker_data'); % this is data from Signal
 
 mypeaks = ["P30" ;"N45";"P60" ;"N100";"P180"];
 myGMFPpeaks = ["GMFP1" ;"GMFP2";"GMFP3"];
