@@ -10,6 +10,7 @@ mymdir = ('/Users/Isabella/Documents/thesharmalab/TMS_EEG/Additional_Experiments
 cd(mymdir);  
 
 mydata = [];
+mycon = [];
 for k=1:8;
     mycon = []; 
     for j=1:4;
@@ -22,6 +23,17 @@ for k=1:8;
         mycon(index_rejected_trials,:) = 0; % removes the rejected files
         mycon( ~any(mycon,2), : ) = [];  %delete rows with 0
     save(strcat('HV00',num2str(k),'_CONMEP.txt'), 'mycon', '-ascii'); 
+    %separate trials into each condition
+    rereferenced_eeg = pop_reref(EEG,[]); %re-references EEG to common average
+     for l=1:4; %for each condition (we have 4 conditions)
+         index = find(mycon(:,1)==l); %finds indices for each condition
+         data = rereferenced_eeg; %sets up an EEG structure from the re-referenced EEG
+         data.data = rereferenced_eeg.data(:,:,index); %takes out the EEG data pertaining to condition
+         data.trials = size(data.data,3); %changes number of trials to suit
+         data.epoch = rereferenced_eeg.epoch(:,index); %changes epoch labels to suit
+           filename = strcat('HV00',num2str(k),'_ADD_','con',num2str(l),'_eeg'); %sets up filename
+           pop_saveset(data,'filename',filename,'filepath',mydir) %saves filename in mydir
+     end
     mycon(:,3) = [k];
     mydata = vertcat(mydata,mycon);
 end
