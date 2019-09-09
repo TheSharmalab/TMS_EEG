@@ -3,6 +3,8 @@
 % and the MEP peak. It assumes that there are four files per subject
 % rrequires the .mat from stage 1 
 % N Sharma 8/21/19
+% Edited by Vishal Rawji 9/9/19 to split EEG data into each condition and
+% create .set files
 
 mydir = ('/Users/Isabella/Documents/thesharmalab/TMS_EEG/Additional_Experiments/Preprocessed_data');
 mymdir = ('/Users/Isabella/Documents/thesharmalab/TMS_EEG/Additional_Experiments/Preprocessed_data/marker_data'); % this is data from Signal

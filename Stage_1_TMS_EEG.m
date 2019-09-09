@@ -22,12 +22,6 @@ mysub = ('HV005_ADD');
 addpath(genpath('/Applications/MATLAB_R2019a.app/toolbox/eeglab14_1_1b'))
 addpath(genpath('/Applications/MATLAB_R2019a.app/toolbox/FastICA_25'))
 
-
-conditions=[];
-
-
-
-
 % load eeg using .vhdr - PUT CORRECT FILENAME HERE
 [ALLEEG EEG CURRENTSET ALLCOM] = eeglab;
 EEG = pop_loadbv(mydir, strcat(mysub,'.vhdr'));

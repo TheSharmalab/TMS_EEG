@@ -1,4 +1,7 @@
-% ERP Peak Analysis - Uses STUDY structure formed from the output of eeglab ERPs 
+% ERP Peak Analysis - Creates STUDY from .set files created in
+% Stage_2_Generate_ConMEP. Requires .set files to be in current directory.
+% Script then extracts peaks (see below) and plots data for comparison.
+% Vishal Rawji 09/09/2019
 
 mydir = ('/Users/Isabella/Documents/thesharmalab/TMS_EEG/Additional_Experiments/Preprocessed_data/set_files');
 mycon=[ 1 2 3 4];
@@ -14,14 +17,13 @@ myGMFPpeaks = ["GMFP1" ;"GMFP2";"GMFP3"];
 
 % 1 is 120, 2 is 70, 3 70.120 4 70.70
 
-% 4 electrode
-addpath '/Applications/MATLAB_R2019a.app/toolbox/fdr_bh'
-addpath '/Applications/MATLAB_R2019a.app/toolbox/raacampbell-shadedErrorBar-0dc4de5'
-addpath '/Applications/MATLAB_R2019a.app/toolbox/bonf_holm'
-addpath '/Applications/MATLAB_R2019a.app/toolbox/swtest'
-addpath '/Applications/MATLAB_R2019a.app/toolbox/dnafinder-wilcoxon-2f43343'
+% addpath '/Applications/MATLAB_R2019a.app/toolbox/fdr_bh'
+% addpath '/Applications/MATLAB_R2019a.app/toolbox/raacampbell-shadedErrorBar-0dc4de5'
+% addpath '/Applications/MATLAB_R2019a.app/toolbox/bonf_holm'
+% addpath '/Applications/MATLAB_R2019a.app/toolbox/swtest'
+% addpath '/Applications/MATLAB_R2019a.app/toolbox/dnafinder-wilcoxon-2f43343'
 
-% this is a test. 
+%% Create STUDY
 
 STUDY =[];
 [STUDY ALLEEG] = std_editset( STUDY, [], 'commands', { ...
@@ -57,10 +59,13 @@ STUDY =[];
 { 'index' 30 'load' 'HV008_ADD_con2_eeg.set' 'subject' 'subj8' 'condition' '70.70' }, ...
 { 'index' 31 'load' 'HV008_ADD_con3_eeg.set' 'subject' 'subj8' 'condition' '70.120' }, ...
 { 'index' 32 'load' 'HV008_ADD_con4_eeg.set' 'subject' 'subj8' 'condition' '120' }});
-STUDY = pop_savestudy( STUDY, EEG, 'filename','ADD_STUDY' );
+STUDY = pop_savestudy( STUDY, EEG, 'filename','ADD_STUDY' ); %saves STUDY
+
+
 
 [STUDY ALLEEG] = pop_loadstudy('ADD_STUDY.study') %load study and EEG files
 
+%% Calculate mean ERPs for each condition
 
 [STUDY ALLEEG customres] = std_precomp(STUDY, ALLEEG, 'channels', 'customfunc', @(EEG,varargin)(mean(EEG.data,3)')); %Compute ERPs for all channels, subjects and timepoints
 
@@ -82,6 +87,8 @@ STUDY.changrp(i).erpdata{3,1} = squeeze(pp_70_120(:,i,:));
 STUDY.changrp(i).erpdata{4,1} = squeeze(sp_120(:,i,:));
 STUDY.changrp(i).erptimes = erptimes;
 end
+
+%% Extract peaks for each TEP waveform
 
 peaks = ones(6,15,4); %Sets up the array where the peaks will be stored
 output = {};
@@ -136,7 +143,7 @@ end
 
 save('combo_myeeg_tep_peaks.txt', 'output'); 
 
-%Calculate mean and SEM of each TEP for each condition
+%% Calculate mean and SEM of each TEP for each condition
 
 mean_tep_output=[];
 
@@ -153,15 +160,17 @@ end
 
 save('combo_myeeg_tep_waveforms.txt', 'mean_tep_output'); 
 
-%Calculate arithmetic difference between one TEP and another
-%TO ADD WHEN CONDITIONS AND COMPARISONS ARE KNOWN
-plot(STUDY.changrp(1).erptimes,mean_tep_output(find(mean_tep_output(:,3) == 1))) %plots condition 1
+%% Plot average TEPs and calculate arithmetic difference between one TEP and another
+%70 vs 70.70
+plot(STUDY.changrp(1).erptimes,mean_tep_output(find(mean_tep_output(:,3) == 2))) %plots condition 2 (70)
 hold on
-plot(STUDY.changrp(1).erptimes,mean_tep_output(find(mean_tep_output(:,3) == 2))) %plots condition 2
-hold on
-plot(STUDY.changrp(1).erptimes,mean_tep_output(find(mean_tep_output(:,3) == 3))) %plots condition 3
-hold on
-plot(STUDY.changrp(1).erptimes,mean_tep_output(find(mean_tep_output(:,3) == 4))) %plots condition 4
-hold on
+plot(STUDY.changrp(1).erptimes,mean_tep_output(find(mean_tep_output(:,3) == 4))) %plots condition 4 (70.70)
 plot(STUDY.changrp(1).erptimes,mean_tep_output(find(mean_tep_output(:,3) == 2))-mean_tep_output(find(mean_tep_output(:,3) == 4))); %plots the subtraction of 4 from 2
+xlim([-100 300])
 
+%120 vs 70.120
+plot(STUDY.changrp(1).erptimes,mean_tep_output(find(mean_tep_output(:,3) == 1))) %plots condition 3 (120)
+hold on
+plot(STUDY.changrp(1).erptimes,mean_tep_output(find(mean_tep_output(:,3) == 3))) %plots condition 4 (70.120)
+plot(STUDY.changrp(1).erptimes,mean_tep_output(find(mean_tep_output(:,3) == 1))-mean_tep_output(find(mean_tep_output(:,3) == 3))); %plots the subtraction of 3 from 1
+xlim([-100 300])
