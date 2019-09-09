@@ -7,6 +7,10 @@
 mydir = ('/Users/Isabella/Documents/thesharmalab/TMS_EEG/Additional_Experiments/Preprocessed_data');
 mymdir = ('/Users/Isabella/Documents/thesharmalab/TMS_EEG/Additional_Experiments/Preprocessed_data/marker_data'); % this is data from Signal
 
+mydir = ('/Users/Vish 1/Desktop/ADD_EXP/Preprocessed_data');
+mymdir = ('/Users/Vish 1/Desktop/ADD_EXP/Preprocessed_data'); % this is data from Signal
+
+
 cd(mymdir);  
 
 mydata = [];
