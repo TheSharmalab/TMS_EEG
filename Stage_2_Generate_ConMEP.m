@@ -1,7 +1,12 @@
 
-% This file requires the text files output from Signal including markers
-% and the MEP peak. It assumes that there are four files per subject
-% rrequires the .mat from stage 1 
+% This script requires the text files output from Signal including markers
+% and the MEP peak. It assumes that there are four files per subject.
+% This script also requires the preprocessed EEG data output from Stage_1_TMS_EEG.m
+% (.mat files: 'EEG' and 'index_rejected_trials'). 
+% This script combines the MEP outputs into one file, containing the MEP
+% aplitude and condition. It then sorts the EEG data into four EEG
+% datasets, each representing a different condition. It then saves each of these
+% EEG outputs for use in Stage_3_TMSEEG_NS_VR
 % N Sharma 8/21/19
 % Edited by Vishal Rawji 9/9/19 to split EEG data into each condition and
 % create .set files

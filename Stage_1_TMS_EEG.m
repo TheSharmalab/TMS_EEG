@@ -1,13 +1,19 @@
 clear all
 clc
 
-% This is the modified script by N Sharma 
-% this script require CHANLOCS2 (?location). This has been uploaded to github
+% This is the modified script by N Sharma.
+% This script preprocesses TMS-EEG data using functions from the TESA toolbox 
+% from Rogasch et al. FastICA 25 and EEGLAB are also required to run this
+% script.
+
+% This script require CHANLOCS2 (?location). This has been uploaded to github
 % There are a number of dependences on toolboxs NEED TO DOWNLOAD bvaio1.57
 % from https://github.com/openroc/eeglab/tree/master/tags/EEGLAB8_0_0_0beta/plugins
 % and put into  eeglab14_1_1b/plugins/bvaio1.57
-% this currently outputs a .mat files for eacxh subject. 
-% could consider outputing .set file. 
+% this currently outputs a .mat files for each subject. The output contains
+% the preprocessed EEG data (stored in EEG), CHANLOCS32 and the index of
+% rejected trials (as a vector). The index of rejected trials is used to
+% remove MEP trials in Stage_2_Generate_ConMEP.m
 % 23/8/19
 
 mycap = ('/Applications/MATLAB_R2019a.app/toolbox/eeglab14_1_1b/plugins/dipfit2.3/standard_BESA/standard-10-5-cap385.elp') ; % NOTE this is version 2.3. previously 2.2
@@ -46,7 +52,7 @@ EEG = eeg_checkset( EEG );
 
 % extract epochs and demean - longer epochs - check number of event ('S126' for Brainamp)
 
-EEG = pop_epoch( EEG, {  'S 13'  }, [-1.3  1.3], 'epochinfo', 'yes');
+EEG = pop_epoch( EEG, {  'S 13'  }, [-1.3  1.3], 'epochinfo', 'yes'); % 'S 13' is the TMS trigger. Change according to stimulus of interest
 [ALLEEG EEG CURRENTSET] = pop_newset(ALLEEG, EEG, 1,'gui','off'); 
 EEG = eeg_checkset( EEG );
 EEG = pop_rmbase( EEG, [-1000 -10]);

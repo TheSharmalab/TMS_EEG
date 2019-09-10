@@ -1,6 +1,7 @@
 % ERP Peak Analysis - Creates STUDY from .set files created in
 % Stage_2_Generate_ConMEP. Requires .set files to be in current directory.
-% Script then extracts peaks (see below) and plots data for comparison.
+% Script then extracts peaks of average M1 TEP waveforms (see below) and 
+% plots data for comparison.
 % Vishal Rawji 09/09/2019
 
 mydir = ('/Users/Isabella/Documents/thesharmalab/TMS_EEG/Additional_Experiments/Preprocessed_data/set_files');
