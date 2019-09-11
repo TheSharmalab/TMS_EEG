@@ -11,10 +11,10 @@ mywin = [-100  300];
 addpath(genpath('/Applications/MATLAB_R2019a.app/toolbox/eeglab14_1_1b'))
 mymdir = ('/Users/Isabella/Documents/thesharmalab/TMS_EEG/Additional_Experiments/Preprocessed_data/set_files/marker_data'); % this is data from Signal
 
-mypeaks = ["N15" ;"P30" ;"N45";"P60" ;"N100";"P180"];
+mypeaks = {'N15';'P30';'N45';'P60';'N100';'P180'};
 myGMFPpeaks = ["GMFP1" ;"GMFP2";"GMFP3"];
 
-
+addpath(genpath('/Applications/MATLAB_R2017a.app/toolbox/eeglab-952938e2c0ae800ef6ccf50f471595c0969a2890/eeglab14_1_1b'))
 
 % 1 is 120, 2 is 70, 3 70.120 4 70.70
 
@@ -91,7 +91,7 @@ end
 
 %% Extract peaks for each TEP waveform
 
-peaks = ones(6,15,4); %Sets up the array where the peaks will be stored
+peaks = ones(6,length(STUDY.subject),4); %Sets up the array where the peaks will be stored
 output = {};
 k = [1:6];
 
@@ -163,15 +163,83 @@ save('combo_myeeg_tep_waveforms.txt', 'mean_tep_output');
 
 %% Plot average TEPs and calculate arithmetic difference between one TEP and another
 %70 vs 70.70
-plot(STUDY.changrp(1).erptimes,mean_tep_output(find(mean_tep_output(:,3) == 2))) %plots condition 2 (70)
+figure
+plot(STUDY.changrp(1).erptimes,mean_tep_output(find(mean_tep_output(:,3) == 2))); %plots condition 2 (70)
 hold on
-plot(STUDY.changrp(1).erptimes,mean_tep_output(find(mean_tep_output(:,3) == 4))) %plots condition 4 (70.70)
+plot(STUDY.changrp(1).erptimes,mean_tep_output(find(mean_tep_output(:,3) == 4))); %plots condition 4 (70.70)
 plot(STUDY.changrp(1).erptimes,mean_tep_output(find(mean_tep_output(:,3) == 2))-mean_tep_output(find(mean_tep_output(:,3) == 4))); %plots the subtraction of 4 from 2
 xlim([-100 300])
+title('70 (blue), 70.70(red), subtraction (70 - 70.70) (green)')
 
 %120 vs 70.120
-plot(STUDY.changrp(1).erptimes,mean_tep_output(find(mean_tep_output(:,3) == 1))) %plots condition 3 (120)
+figure
+plot(STUDY.changrp(1).erptimes,mean_tep_output(find(mean_tep_output(:,3) == 1))) %plots condition 1 (120)
 hold on
-plot(STUDY.changrp(1).erptimes,mean_tep_output(find(mean_tep_output(:,3) == 3))) %plots condition 4 (70.120)
+plot(STUDY.changrp(1).erptimes,mean_tep_output(find(mean_tep_output(:,3) == 3))) %plots condition 3 (70.120)
 plot(STUDY.changrp(1).erptimes,mean_tep_output(find(mean_tep_output(:,3) == 1))-mean_tep_output(find(mean_tep_output(:,3) == 3))); %plots the subtraction of 3 from 1
 xlim([-100 300])
+title('120 (blue), 70.120(red), subtraction (120 - 70.120) (green)')
+
+%% Correlations 
+subtracted_waveform = tep_array(:,:,1) - tep_array(:,:,3);
+for i = 1:length(STUDY.subject)
+    
+    % This section extracts each peak. Finds the min/max peak between time
+    % intervals. 
+    N15 = min(-findpeaks(-subtracted_waveform(i,1001:1021)));
+    P30 = max(findpeaks(subtracted_waveform(i,1016:1036)));
+    N45 = min(-findpeaks(-subtracted_waveform(i,1032:1056)));
+    P60 = max(findpeaks(subtracted_waveform(i,1049:1071)));
+    N100 = min(-findpeaks(-subtracted_waveform(i,1091:1151)));
+    P180 = max(findpeaks(subtracted_waveform(i,1151:1251)));
+
+    %Next section fills in the value of the ERP at that time point (extrapolates) if a peak
+    %cannot be found. 
+
+    if isempty(N15) == 1
+        N15 = subtracted_waveform(1016);
+    end
+    if isempty(P30) == 1
+        P30 = subtracted_waveform(1031);
+    end
+    if isempty(N45) == 1
+        N45 = subtracted_waveform(1046);
+    end
+    if isempty(P60) == 1
+        P60 = subtracted_waveform(1061);
+    end
+    if isempty(N100) == 1
+        N100 = subtracted_waveform(1101);
+    end
+    if isempty(P180) == 1
+        P180 = subtracted_waveform(1181);
+    end
+
+    subtracted_peaks(:,i) = [N15; P30; N45; P60; N100; P180;]; %summary array (peak x subject)
+
+end
+
+mep_70_120 = []; %sets up array containing mean MEP values for 70.120 condition
+for n = 1:length(STUDY.subject)
+        file = dlmread(strcat('HV00',num2str(n),'_CONMEP','.txt')); %read in combined file from Stage_2_Generate_ConMEP
+        index = find(file(:,1)==3); %find indices for 70.120 trials
+        mep_70_120(n,1) = mean(file(index,2)); %calculate mean MEP for each subject       
+end
+
+[rho,pval] = corr(mep_70_120,subtracted_peaks','type','spearman'); %spearman rank correlation calculation
+
+figure
+for m = 1:length(mypeaks)
+        subplot(2,3,m)
+        scatter(mep_70_120',subtracted_peaks(m,:)); %plots MEP against TEP peak amplitude
+        xlabel('MEP amplitude')
+        ylabel('Peak amplitude')
+        title([mypeaks{m},', rho= ',num2str(rho(m)),', p=',num2str(pval(m))]) 
+        
+        %this section is for plotting line of best fit onto graphs
+        coefficients = polyfit(mep_70_120', subtracted_peaks(m,:), 1);
+        xFit = linspace(min(mep_70_120'), max(mep_70_120'), 1000);
+        yFit = polyval(coefficients , xFit);
+        hold on;
+        plot(xFit, yFit, 'r-', 'LineWidth', 2);
+end
