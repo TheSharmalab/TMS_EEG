@@ -182,6 +182,7 @@ title('120 (blue), 70.120(red), subtraction (120 - 70.120) (green)')
 
 %% Correlations 
 subtracted_waveform = tep_array(:,:,1) - tep_array(:,:,3);
+subtracted_waveform = tep_array(:,:,1) - tep_array(:,:,2);
 for i = 1:length(STUDY.subject)
     
     % This section extracts each peak. Finds the min/max peak between time
