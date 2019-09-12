@@ -9,11 +9,13 @@ mycon=[ 1 2 3 4];
 mychan = [1:63];
 mywin = [-100  300];
 addpath(genpath('/Applications/MATLAB_R2019a.app/toolbox/eeglab14_1_1b'))
+addpath '/Applications/MATLAB_R2017a.app/toolbox/fdr_bh'
 mymdir = ('/Users/Isabella/Documents/thesharmalab/TMS_EEG/Additional_Experiments/Preprocessed_data/set_files/marker_data'); % this is data from Signal
 
 mypeaks = {'N15';'P30';'N45';'P60';'N100';'P180'};
 myGMFPpeaks = ["GMFP1" ;"GMFP2";"GMFP3"];
 
+%line below for Vish
 addpath(genpath('/Applications/MATLAB_R2017a.app/toolbox/eeglab-952938e2c0ae800ef6ccf50f471595c0969a2890/eeglab14_1_1b'))
 
 % 1 is 120, 2 is 70, 3 70.120 4 70.70
@@ -181,39 +183,38 @@ xlim([-100 300])
 title('120 (blue), 70.120(red), subtraction (120 - 70.120) (green)')
 
 %% Correlations 
-subtracted_waveform = tep_array(:,:,1) - tep_array(:,:,3);
-subtracted_waveform = tep_array(:,:,1) - tep_array(:,:,2);
+individual_subtracted_waveform = tep_array(:,:,1) - tep_array(:,:,3);
 for i = 1:length(STUDY.subject)
     
     % This section extracts each peak. Finds the min/max peak between time
     % intervals. 
-    N15 = min(-findpeaks(-subtracted_waveform(i,1001:1021)));
-    P30 = max(findpeaks(subtracted_waveform(i,1016:1036)));
-    N45 = min(-findpeaks(-subtracted_waveform(i,1032:1056)));
-    P60 = max(findpeaks(subtracted_waveform(i,1049:1071)));
-    N100 = min(-findpeaks(-subtracted_waveform(i,1091:1151)));
-    P180 = max(findpeaks(subtracted_waveform(i,1151:1251)));
+    N15 = min(-findpeaks(-individual_subtracted_waveform(i,1001:1021)));
+    P30 = max(findpeaks(individual_subtracted_waveform(i,1016:1036)));
+    N45 = min(-findpeaks(-individual_subtracted_waveform(i,1032:1056)));
+    P60 = max(findpeaks(individual_subtracted_waveform(i,1049:1071)));
+    N100 = min(-findpeaks(-individual_subtracted_waveform(i,1091:1151)));
+    P180 = max(findpeaks(individual_subtracted_waveform(i,1151:1251)));
 
     %Next section fills in the value of the ERP at that time point (extrapolates) if a peak
     %cannot be found. 
 
     if isempty(N15) == 1
-        N15 = subtracted_waveform(1016);
+        N15 = individual_subtracted_waveform(1016);
     end
     if isempty(P30) == 1
-        P30 = subtracted_waveform(1031);
+        P30 = individual_subtracted_waveform(1031);
     end
     if isempty(N45) == 1
-        N45 = subtracted_waveform(1046);
+        N45 = individual_subtracted_waveform(1046);
     end
     if isempty(P60) == 1
-        P60 = subtracted_waveform(1061);
+        P60 = individual_subtracted_waveform(1061);
     end
     if isempty(N100) == 1
-        N100 = subtracted_waveform(1101);
+        N100 = individual_subtracted_waveform(1101);
     end
     if isempty(P180) == 1
-        P180 = subtracted_waveform(1181);
+        P180 = individual_subtracted_waveform(1181);
     end
 
     subtracted_peaks(:,i) = [N15; P30; N45; P60; N100; P180;]; %summary array (peak x subject)
@@ -243,4 +244,28 @@ for m = 1:length(mypeaks)
         yFit = polyval(coefficients , xFit);
         hold on;
         plot(xFit, yFit, 'r-', 'LineWidth', 2);
+end
+
+%% One-sample t test
+
+for l = 1:length(individual_subtracted_waveform)
+
+[h,p] = ttest(individual_subtracted_waveform(:,l));
+p_value_t_test(1,l) = p;
+end
+
+for o = 1:length(p_value_t_test)
+
+significant_points(o) = p_value_t_test(o)<0.05;
+end
+
+x = p_value_t_test(1000:1200);
+y = fdr_bh(x,0.05,'pdep','yes');
+
+significant_indices = y==1;
+significant_indices = find(significant_indices);
+significant_indices = significant_indices;
+
+for b = 1:length(significant_indices)
+line([(significant_indices(b));(significant_indices(b))],[-5.8;-5.5],'linestyle','-','Color','black','LineWidth',2);
 end
